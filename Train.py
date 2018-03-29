@@ -8,6 +8,8 @@ from scipy import ndimage
 import matplotlib.image as mpimg
 import cv2
 import datetime
+import time
+import math
 
 import torch
 import torch.nn as nn
@@ -16,7 +18,7 @@ import torch.nn.functional as F
 from torch.autograd import Variable
 import torchvision.transforms as T
 
-nActions=4
+nActions=6
 rm_capacity=100000
 nEpisodes=100
 BATCH_SIZE=32
@@ -68,7 +70,7 @@ def optimize_model():
             target=Variable(torch.FloatTensor([transition.reward]).unsqueeze(0).cuda())
         else:
             target=transition.reward
-            q=GAMMA*model.forward(transition.next_state.cuda())
+            q=GAMMA*target_model.forward(transition.next_state.cuda())
             target+=torch.max(q)
         target=target.detach()
         output=model.forward(transition.state.cuda())
@@ -129,9 +131,13 @@ def plot_durations():
     plt.show()
 
 model=DQN()
+target_model=DQN()
+model.load_state_dict(torch.load('NetParameters.txt'))
+target_model.load_state_dict(model.state_dict())
 
 if use_cuda:
     model=model.cuda()
+    target_model=target_model.cuda()
 agent=Agent(1)
 memory=ReplayMemory(rm_capacity)
 criterion=nn.MSELoss()
@@ -142,6 +148,7 @@ returns=[]
 
 env=gym.make('Pong-v0')
 
+start_time=time.time()
 for _ in range(10):
     observations=[None,None,None,None]
     observations[0]=env.reset()
@@ -164,10 +171,11 @@ for _ in range(10):
         cur_state=next_state
 
 
+print(datetime.datetime.now(),'Pocetak treninga')
 
 for i_episode in range(nEpisodes):
-    #if i_episode<=nEpisodes/10 and agent.epsilon>0.1:
-    agent.epsilon=1-(i_episode/nEpisodes)
+    if i_episode<=nEpisodes/10 and agent.epsilon>0.1:
+        agent.epsilon=1-(i_episode*10/nEpisodes)*0.9
     observations=[None,None,None,None]
     observations[0]=env.reset()
     done=False
@@ -181,7 +189,6 @@ for i_episode in range(nEpisodes):
         observations[i]=editScreen(observations[i])
     cur_state=makeState(observations)
     while not done:
-        t+=1
         #env.render()
         action=agent.take_action(cur_state)
         newO,reward,done,info=env.step(action)
@@ -197,7 +204,12 @@ for i_episode in range(nEpisodes):
         if done:
             ep_durations.append(t+1)
             returns.append(G)
-            print(datetime.datetime.now(), t+1, G)
+            print(datetime.datetime.now(),math.floor(time.time()-start_time), t+1, G)
+        if t%400==0:
+            target_model.load_state_dict(model.state_dict())
+        t+=1
+
+torch.save(model.state_dict(), 'NetParameters.txt')
 
 plot_durations()
 input("Press Enter to exit...")
