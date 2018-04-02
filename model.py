@@ -18,3 +18,15 @@ class DQN(nn.Module):
         x=x.view(x.size(0),-1)
         x=self.fc1(x)
         return self.fc2(x)
+
+class DQNCP(nn.Module):
+    def __init__(self,n_actions):
+        nn.Module.__init__(self)
+        self.l1 = nn.Linear(4, 128)
+        self.l2 = nn.Linear(128, 256)
+        self.l3=nn.Linear(256,2)
+
+    def forward(self, x):
+        x = F.relu(self.l1(x))
+        x=F.relu(self.l2(x))
+        return self.l3(x)
