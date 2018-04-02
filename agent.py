@@ -4,9 +4,16 @@ import torch.optim as optim
 import torch.nn.functional as F
 from torch.autograd import Variable
 import torchvision.transforms as T
+import math
 
 import random
-from model import DQN
+from model import DQN,DQNCP
+EPS_START = 0.9  # e-greedy threshold start value
+EPS_END = 0.05  # e-greedy threshold end value
+EPS_DECAY = 200  # e-greedy threshold decay
+FloatTensor = torch.cuda.FloatTensor
+LongTensor = torch.cuda.LongTensor
+ByteTensor = torch.cuda.ByteTensor
 
 class Agent():
     def __init__(self,n_actions,eps_start,eps_end,eps_steps,gamma,train,cuda,batch_size):
@@ -16,10 +23,10 @@ class Agent():
         self.gamma=gamma
         self.batch_size=batch_size
         self.n_actions=n_actions
-        self.frames=0
+        self.steps_done=0
 
-        self.policy_net=DQN(n_actions)
-        self.target_net=DQN(n_actions)
+        self.policy_net=DQN(n_actions) # CHANGE THESE TWO LINES FOR TESTING ON CART POLE
+        self.target_net=DQN(n_actions) # CHANGE THESE TWO LINES FOR TESTING ON CART POLE
         if not train:
             self.policy_net.load_state_dict(torch.load('NetParameters.txt'))
         self.update_target_net()
@@ -29,52 +36,50 @@ class Agent():
 
         self.criterion=nn.MSELoss()
         self.optimizer=optim.RMSprop(self.policy_net.parameters())
-        random.seed(10)
+        #self.optimizer=optim.Adam(self.policy_net.parameters(),0.001)
 
     def take_action(self,state):
         r=random.random()
-        self.frames+=1
-        epsilon=self.eps_start-((self.eps_start-self.eps_end)/self.eps_steps)*self.frames
+
+        epsilon=self.eps_start-((self.eps_start-self.eps_end)/self.eps_steps)*self.steps_done
+        #epsilon=EPS_END + (EPS_START - EPS_END) * math.exp(-1. * self.steps_done / EPS_DECAY)
+
+        self.steps_done+=1
         if epsilon<self.eps_end:
-            epsilon=self.eps.end
+            epsilon=self.eps_end
         if r<epsilon:
             return random.randint(0,self.n_actions-1)
         else:
-            state=state.cuda()
-            q=self.policy_net.forward(state)
-            maxi=q.data[0][0]
-            maxidx=0
-            for i in range(1,self.n_actions):
-                if q.data[0][i]>maxi:
-                    maxi=q.data[0][i]
-                    maxidx=i
-            return i
+            return self.policy_net(Variable(state.cuda(),volatile=True)).data.max(1)[1][0] #without [0] it was a long tensor of size 1,but env.step() takes a number,which is size 0
 
-    def optimize_model(self,mem):
-        if len(mem.memory)<self.batch_size:
+    def optimize_model(self,memory):
+        if len(memory.memory)<self.batch_size:
             return
-        transitions=mem.sample(self.batch_size)
-        #q=target_model.forward()
+        transitions = memory.sample(self.batch_size)
+        batch_state, batch_action, batch_next_state, batch_reward = zip(*transitions)
+        batch_state = Variable(torch.cat(batch_state)).cuda()
+        batch_action = Variable(torch.cat(batch_action)).cuda()
+        batch_reward = Variable(torch.cat(batch_reward)).cuda()
+        batch_next_state = Variable(torch.cat(batch_next_state)).cuda()
+
+        current_q_values = self.policy_net(batch_state).gather(1, batch_action.unsqueeze(1)) #action was 1 dimensional,dimensions need to match batch_state
+
+        max_next_q_values = self.target_net(batch_next_state).detach().max(1)[0]
+        expected_q_values = batch_reward + (self.gamma * max_next_q_values)
+
+        loss=self.criterion(current_q_values,expected_q_values)
+
         self.optimizer.zero_grad()
-        for transition in transitions:
-            if transition.next_state is None:
-                target=Variable(torch.FloatTensor([transition.reward]).unsqueeze(0).cuda())
-            else:
-                target=transition.reward
-                q=self.gamma*self.target_net.forward(transition.next_state.cuda())
-                target+=torch.max(q)
-            target=target.detach() #for some reason it won't work without this
-            output=self.policy_net.forward(transition.state.cuda())
-            output=output[0,transition.action]
-            loss=self.criterion(output,target)
-            loss.backward()
+        loss.backward()
         self.optimizer.step()
 
-        if self.frames%400==0: #update target net
+        if self.steps_done%400==0: #update target net
             self.update_target_net()
 
     def update_target_net(self):
         self.target_net.load_state_dict(self.policy_net.state_dict())
 
     def save(self):
-        torch.save(policy_net.state_dict(), 'NetParameters.txt')
+        print("Cuva model")
+        torch.save(self.policy_net.state_dict(), 'NetParameters.txt')
+        print("Sacuvao ga je")

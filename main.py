@@ -16,28 +16,30 @@ from agent import Agent
 from memory import ReplayMemory
 
 #constants
-ENV='Pong-v0'
-N_ACTIONS=6
-RM_CAPACITY=100000 #replay memory capacity
+ENV='Breakout-v0'
+N_ACTIONS=4
+RM_CAPACITY=10000 #replay memory capacity
 BATCH_SIZE=32
 GAMMA=0.99
 
-N_EPISODES=100
+N_EPISODES=1000
 INIT_RM=1 #number of episodes used to fill replay memory
 
 EPS_START = 1
 EPS_END  = .1
-EPS_STEPS = 75000
+EPS_STEPS = 10000
 
 TRAIN=True
 
+
 #check if gpu is is available
 use_cuda = torch.cuda.is_available()
+use_cuda=False
 FloatTensor = torch.cuda.FloatTensor if use_cuda else torch.FloatTensor
 LongTensor = torch.cuda.LongTensor if use_cuda else torch.LongTensor
 ByteTensor = torch.cuda.ByteTensor if use_cuda else torch.ByteTensor
 Tensor = FloatTensor
-
+use_cuda=True
 
 def rgb2gray(rgb):
     r, g, b = rgb[:,:,0], rgb[:,:,1], rgb[:,:,2]
@@ -50,9 +52,9 @@ def editScreen(observation):
     observation=observation[15:99,:]
     return observation
 
-def makeState(observations):
-    observations[3]=editScreen(observations[3])
-    return Variable((torch.from_numpy(np.stack(observations,axis=0))).unsqueeze(0).float())
+def makeState(observation_buffer):
+    observation_buffer[3]=editScreen(observation_buffer[3])
+    return FloatTensor(np.stack(observation_buffer,axis=0))
 
 def plot_durations():
     plt.clf()
@@ -69,7 +71,7 @@ def plot_durations():
     plt.xlabel('Episode')
     plt.ylabel('Duration')
     plt.plot(returns)
-    plt.show()
+    plt.pause(0.001)
 
 #init agent, memory and environment
 agent=Agent(N_ACTIONS,EPS_START,EPS_END,EPS_STEPS,GAMMA,TRAIN,use_cuda,BATCH_SIZE)
@@ -80,67 +82,82 @@ env=gym.make(ENV)
 ep_durations=[] #used for ploting
 returns=[]
 
-start_time=time.time()
+
 
 #fill replay memory with random episodes
 for _ in range(INIT_RM):
-    observations=[None,None,None,None]
-    observations[0]=env.reset()
-    done=False
+    observation_buffer=[None,None,None,None]
+    observation_buffer[0]=env.reset()
     for i in range(3):
-        env.render()
+        #env.render()
         action=env.action_space.sample()
-        observations[i+1],r,_,_=env.step(action)
-        observations[i]=editScreen(observations[i])
-    cur_state=makeState(observations)
-    while not done:
-        env.render()
-        newO,reward,done,info=env.step(env.action_space.sample())
-        observations.pop(0)
-        observations.append(newO)
-        next_state=makeState(observations)
-        if done:
-            next_state=None
-        memory.push(cur_state,action,next_state,reward)
+        observation_buffer[i+1],r,_,_=env.step(action)
+        observation_buffer[i]=editScreen(observation_buffer[i])
+    cur_state=makeState(observation_buffer)
+    while True:
+        #env.render()
+        action=env.action_space.sample()
+        newO,reward,done,info=env.step(action)
+
+        observation_buffer.pop(0)
+        observation_buffer.append(newO)
+        next_state=makeState(observation_buffer)
+
+        memory.push(cur_state.unsqueeze(0),LongTensor([action]),next_state.unsqueeze(0),FloatTensor([reward]))
+
         cur_state=next_state
 
+        if done:
+            break
 
-print(datetime.datetime.now(),'Pocetak treninga')
+#TODO Implement None for terminal states
+start_time=datetime.datetime.now()
+
 frames=0
 
 for i_episode in range(N_EPISODES): #start of training
-    observations=[None,None,None,None]
-    observations[0]=env.reset()
-    done=False
-    t=0
+    if(i_episode%10==0):
+        print("Time is {0}".format(datetime.datetime.now()))
+    observation_buffer=[None,None,None,None]
+    observation_buffer[0]=env.reset()
+    steps=0
     G=0
     for i in range(3):
         env.render()
-        observations[i+1],r,_,_=env.step(env.action_space.sample())
+        observation_buffer[i+1],r,_,_=env.step(env.action_space.sample())
         G+=r
-        t+=1
-        observations[i]=editScreen(observations[i])
-    cur_state=makeState(observations)
-    while not done:
+        steps+=1
+        observation_buffer[i]=editScreen(observation_buffer[i])
+    cur_state=makeState(observation_buffer)#cur_state is already a tensor
+    while True:
         env.render()
-        action=agent.take_action(cur_state)
-        newO,reward,done,info=env.step(action)
+        action=agent.take_action(cur_state.unsqueeze(0))
+        newo,reward,done,info=env.step(action)
+
         G+=reward
-        observations.pop(0)
-        observations.append(newO)
-        next_state=makeState(observations)
-        if done:
-            next_state=None
-        memory.push(cur_state,action,next_state,reward)
-        cur_state=next_state
+
+        observation_buffer.pop(0)
+        observation_buffer.append(newo)
+        next_state=makeState(observation_buffer)
+
+        memory.push(cur_state.unsqueeze(0),LongTensor([action]),next_state.unsqueeze(0),FloatTensor([reward]))
+
         agent.optimize_model(memory)
+
+        cur_state=next_state
+        steps+=1
+
         if done:
-            ep_durations.append(t+1)
+            ep_durations.append(steps+1)
             returns.append(G)
-            print(datetime.datetime.now(),math.floor(time.time()-start_time),'ASD', t+1, G)
-        t+=1
+            frames+=steps
+            print("{4} Frames {0} Episode {1} finished after {2} steps with reward {3}"
+                  .format(frames,i_episode, steps,G, '\033[92m' if G >= 0 else '\033[99m'))
+            #plot_durations()
+            break
 
 agent.save()
 
 plot_durations()
+plt.show()
 input("Press Enter to exit...")
