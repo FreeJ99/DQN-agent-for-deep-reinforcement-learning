@@ -1,2 +1,2 @@
-# Rainbow-agent-for-deep-reinforcement-learning
+# DQN-agent-for-deep-reinforcement-learning
   This is my high school final year project
