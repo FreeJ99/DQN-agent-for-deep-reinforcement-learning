@@ -1,0 +1,2114 @@
+\PassOptionsToPackage{svgnames}{xcolor}
+\documentclass[11pt, a4paper]{article}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath, amsfonts, amssymb, amsthm}
+\usepackage[russian, english, croatian]{babel}
+\usepackage{verbatim}
+%\usepackage{algorithm}
+%\usepackage[linesnumbered,ruled]{algorithm2e}
+\usepackage{caption}
+%\usepackage{algpseudocode}
+\usepackage{graphicx}
+\usepackage{subcaption}
+\usepackage{tikz}
+\usepackage{float}
+\usepackage{fancyhdr}
+\usepackage{comment}
+\usepackage{clrscode3e}
+\usepackage{multicol}
+\usepackage{geometry}
+\usepackage{hyperref}
+\usepackage{titlesec}
+\usepackage[nottoc,numbib]{tocbibind}
+\setcounter{secnumdepth}{5}
+\setcounter{tocdepth}{5}
+\usepackage{booktabs}
+\usepackage{siunitx}
+\usetikzlibrary{decorations.pathreplacing,angles,quotes}
+\hypersetup{colorlinks, citecolor=black, filecolor=black, linkcolor=black, urlcolor=black}
+\usetikzlibrary{positioning, arrows, calc, trees, matrix, decorations.pathmorphing, shapes.geometric}
+\geometry{
+	a4paper,
+	total={166mm,253mm},
+	left=22mm,
+	top=22mm,
+}
+\pagestyle{fancy}
+
+\lhead{}
+\rhead{\thepage}
+\cfoot{}
+\chead{\textit{DQN агент за дубоко учење са појачавањем}}
+%\renewcommand{\headrulewidth}{.8pt}
+\setcounter{secnumdepth}{4}
+\titleformat{\paragraph}
+{\normalfont\normalsize\bfseries}{\theparagraph}{1em}{}
+\titlespacing*{\paragraph}
+{0pt}{3.25ex plus 1ex minus .2ex}{1.5ex plus .2ex}
+
+
+\usepackage[object=vectorian]{pgfornament}
+\newcommand{\sectionline}{%
+	\noindent
+	\begin{center}
+	{\color{Black}
+	\resizebox{0.5\linewidth}{1ex}
+	{{%
+	{\begin{tikzpicture}
+	\node  (C) at (0,0) {};
+	\node (D) at (9,0) {};
+	\path (C) to [ornament=85] (D);
+	\end{tikzpicture}}}}}%
+	\end{center}
+}
+
+\addto\captionsenglish {
+	\renewcommand{\contentsname}{Sadrzhaj}
+	\renewcommand{\abstractname}{Abstrakt}
+	\renewcommand{\proofname}{Dokaz}
+	\renewcommand{\refname}{Literatura}
+}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newtheorem{teorema}{\selectlanguage{russian} Теорема}[subsection]
+\newtheorem{definicija}{\selectlanguage{russian} Дефиниција} [subsection]
+\newtheorem{definicijaB}{\selectlanguage{russian} Дефиниција} [section]
+\newtheorem{lema}{\selectlanguage{russian} Лема} [subsection]
+\newtheorem{posledicaL}{\selectlanguage{russian} Последица} [lema]
+\newtheorem{posledicaT}{\selectlanguage{russian} Последица} [teorema]
+\theoremstyle{remark}
+\newtheorem*{dokaz}{\selectlanguage{russian} Доказ}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\usepackage{amsmath}
+\numberwithin{equation}{section}
+
+\begin{document}
+	\selectlanguage{russian}
+	\renewcommand\figurename{Слика}
+    
+	\begin{titlepage}
+
+	\newcommand{\HRule}{\rule{\linewidth}{0.5mm}} % Defines a new command for the horizontal lines, change thickness here
+
+	\center % Center everything on the page
+
+	%----------------------------------------------------------------------------------------
+	%	HEADING SECTIONS
+	%----------------------------------------------------------------------------------------
+
+	\textbf{\LARGE МАТЕМАТИЧКА ГИМНАЗИЈА}\\[5cm] % Name of your university/college
+	\textbf{\Large МАТУРСКИ РАД}\\[0.3cm] % Major heading such as course name
+	из предмета \\[0.3cm]
+	\textbf{\Large Програмирање и програмски језици}\\[.7cm] % Minor heading such as course title
+	на тему\\[0.7cm]
+
+	%----------------------------------------------------------------------------------------
+	%	TITLE SECTION
+	%----------------------------------------------------------------------------------------
+
+	\HRule \\[0.4cm]
+	{ \huge \bfseries DQN агент за дубоко учење са појачавањем}\\[0.4cm] % Title of your document
+	\HRule \\[1.5cm]
+
+	%----------------------------------------------------------------------------------------
+	%	AUTHOR SECTION
+	%----------------------------------------------------------------------------------------
+
+	\begin{minipage}{0.4\textwidth}
+	\begin{flushleft} \large
+	\emph{Ученик:}\\
+	Слободан Јенко, $IV_d$ % Your name
+	\end{flushleft}
+	\end{minipage}
+	~
+	\begin{minipage}{0.4\textwidth}
+	\begin{flushright} \large
+	\emph{Ментори:} \\
+                Јелена Хаџи-Пурић\\
+	Петар Величковић % Supervisor's Name
+	\end{flushright}
+	\end{minipage}\\[9cm]
+
+	% If you don't want a supervisor, uncomment the two lines below and remove the section above
+	%\Large \emph{Author:}\\
+	%John \textsc{Smith}\\[3cm] % Your name
+
+	%----------------------------------------------------------------------------------------
+	%	DATE SECTION
+	%----------------------------------------------------------------------------------------
+
+	{\large Београд, мај 2018.}\\[2.5cm] % Date, change the \today to a set date if you want to be precise
+
+	%----------------------------------------------------------------------------------------
+	%	LOGO SECTION
+	%----------------------------------------------------------------------------------------
+
+	%\includegraphics{Logo}\\[1cm] % Include a department/university logo - this will require the graphicx package
+
+	%------------------------------------------------------------------------------С----------
+
+	\vfill % Fill the rest of the page with whitespace
+
+	\end{titlepage}
+
+	\pagenumbering{roman}
+
+	\renewcommand*\contentsname{Садржај}
+	\tableofcontents
+	\newpage
+
+	\pagenumbering{arabic}
+
+	\section{Увод}
+	
+    \noindent Машинско учење је посебна област компјутерских наука која се бави вештачком интелигенцијом. Циљ алгоритама из ове области је да почну од нуле, и успешно ``науче''  да решавају разне проблеме.
+    
+\noindent Постоје три основна облика машинског учења:
+\begin{itemize}
+	\item \textbf{Супервизирано учење}.\\Ови алгоритми на основу датих тренинг података и ``ознака'' уче да означавају до тада невиђене податке. Пример супервизираног учења је препознавање објекта на слици.
+	\item \textbf{Несупервизирано учење} \\ Сада су алгоритму дати само подаци, а он из њих треба да извуче скривене правилности. Користи се за груписање података.
+	\item \textbf{Учење са појачавањем}. 
+\end{itemize}
+    
+	\noindent Суштина учења са појачавањем је проблем одлучивања. Због тога се оно налази у пресеку више научних дисциплина као што су рачунарске науке, психологија и неурологија. Мотивација за алгоритме често долази из открића о начину на који наш мозак перципира награде и доноси одлуке. Неки од основнох алгоритама учења са појачавањем су врло слични начину на који функционише допамински систем у људском телу.\\
+У проблеме одлучивања спадају трговина на берзи, управљање возилима, играње игрица... Да би на проблем могли применити учење са појачавањем, довољно је да постоје награде и доношење одлука, па уз добро дефинисане награде у ову категорију можемо сврстати сваку људску активност. Због тога је оно кључ развоја генералне вештачке интелгенције која ће бити једна од највећих прекретница у људској историји.\\
+
+	
+	\noindent Учење са појачавањем је теже од осталих облика из више разлога:
+    \begin{itemize}
+	\item Не постоји супервизор, тј. неко ко нам говори који је најбољи потез у одређеној ситуацији. Уместо тога добијамо награде које нам дају меру ваљаности наших акција.
+	\item Награде долазе са закашњењем. Неке акције нам могу донети тренутну позитивну награду а за пар потеза довести до катастрофалног исхода (У шаху можемо замислити ситуацију у којем потез којим смо појели фигуру, противнику омогући да нас матира).
+        \item Подаци које добијамо зависе од акција које смо изабрали. Дакле морамо на паметан начин бирати акције, да би добили корисне податке.
+         \\
+	\end{itemize}
+Такође, супервизирано учење можемо посматрати као поједностављени облик учења са појачавањем.
+
+    \begin{figure}[h!]
+    \renewcommand\figurename{Слика}
+  	\centering
+  	\begin{subfigure}[b]{0.45\linewidth}
+  	  \includegraphics[width=\linewidth]{slika1_1.png}
+   	 \caption{Учење са појачавањем.}
+ 	 \end{subfigure}
+ 	 \begin{subfigure}[b]{0.45\linewidth}
+ 	   \includegraphics[width=\linewidth]{slika1_2.png}
+ 	   \caption{Гране машинског учења.}
+  	\end{subfigure}
+	\end{figure}
+
+    \section{Основни појмови}
+    \subsection{Агент и окружење}
+    \noindent Наведимо сада не тако строге дефиниције основних појмова које ћемо користити:
+    \begin{definicija}
+	\normalfont
+	\noindent Агент је наш алгоритам који интереагује са окружењем. Те интеракције називамо акције  и означавамо их са $A_t$.\\
+     \end{definicija}
+     \begin{definicija}
+	\normalfont
+	\noindent Опсервација $O_t$ је сигнал који нам даје неку информацију о промени стања система у тренутку $t$.\\
+     \end{definicija}
+     \begin{definicija}
+	\normalfont
+	\noindent  Стање је скуп информација које неки објекат памти. Стањем је одређено понашање тог објекта.\\
+     \end{definicija}
+
+     \noindent Разликујемо стање окружења ($S_t^e$) и стање агента ($S_t^a$). Стање окружења је његова унутрашња репрезентација и углавном је недоступно. Стање агента је агентово виђење окружења и то су подаци које агент користи да би изабрао акцију. Нпр. у видео игрицама стање окружења је садржај меморије, а стање агента слика екрана. У даљем тексту реч стање ће се односити на стање агента и означаваћемо га са $S_t$.\\
+
+     \noindent Треба правити разлику између појмова опсервација и стање. Опсервацију агент добија од окружења после сваке извршене акције. Стање је нека функција свих претходних опсервација, $S_t=f(O_1, ...,O_t)$. Нпр. то могу бити све претходне опсервације или само последња.\\
+
+     \begin{definicija}
+	\normalfont
+	\noindent Награда $R_{t+1}$ је скаларни повратни сигнал који нам говори колико је \textbf{моментално} добра акција коју је агент изабрао у тренутку $t$.\\
+
+\noindent Истакнимо још једном да нам тренутна награда не говори колико је заправо добра изабрана акција, зато што акција утиче на читаву будућност. Права вредност акција је кључ решавања неког проблема, јер ако знамо колико акције стварно вреде, знамо и како да се понашамо.
+
+     \end{definicija}
+ \noindent Агент изводи акције унутар окружења, чиме изазива да окружење промени стање, добија наградни сигнал и опсервацију. Циљ агента је да максимизује укупну стечену награду. При игрању видео игрица акције су могући притисци тастера а награде су промене у броју поена.\\
+
+
+ \noindent Дакле, агент је у стању $S_t$, бира акцију $A_t$, затим добија опсервацију $O_{t+1}$ и награду $R_{t+1}$. Индекси су ствар договора, можемо ставити и $O_t$ или $R_t$. У овом случају, промену стања окружења замишљамо као промену тренутка, па агент награду и опсервацију добија тренутак након што бира акцију. \\
+
+ \noindent Универзалност учења са појачавањем се базира на хипотези да све циљеве можемо представити као максимизацију очекиване укупне награде. \\
+
+   \begin{definicija}
+	\normalfont
+	\noindent Стање $S_t$ има Марковљево својство акко:
+        	\begin{equation}
+  	\mathbb{P}[S_{t+1}|S_t] = \mathbb{P}[S_{t+1}|S_1,...,S_t]
+	\end{equation}
+     \end{definicija}
+
+	\noindent Марковљево својство нам говори да будућност зависи само од тренутног стања. Захваљујући томе не морамо да чувамо сва претходна стања.
+    
+    \begin{definicija}
+	\normalfont
+	\noindent Кажемо да је окружење потпуно прегледно ако агент има увид у стање окружења, $O_t = S_t^a = S_t^e$. У супротном се ради о делимично прегледном окружењу.
+     \end{definicija}
+	\noindent Ако важи потпуна прегледност, процес интеракције агента са окружењем називамо \textbf{Марковљев процес одлучивања (MDP)}. У супротном ради се о \textbf{делимично прегледном Марковљевом процесу одлучивања}.\\
+
+   	\noindent Потпуна прегледност значајно олакшава учење. Да би решили делимично прегледна окружења прво ћемо се позабавити Марковљевим процесима одлучивања. Већина проблема у стварном свету су делимично прегледни, нпр. робот са камером чији је циљ кретање кроз простор види само слику света испред себе, не и своју апсолутну локацију, у видео игрицама доступна нам је само слика екрана, не и меморија.\\
+
+    \noindent У случају делимично прегледног MDP-а, агент мора да конструише своје стање као функцију виђених опсервација.
+
+
+    \subsection{Компоненте агента}
+
+  	\noindent Наш агент може да садржи једну или више следећих компоненти:
+	\begin{itemize}
+	\item \textbf{Полиса} ($\pi$): одређује понашање агента. То је функција која слика стања у акције.\\Може бити детерминистичка $a = \pi(s)$ или стохастична $\pi(a|s)=\mathbb{P}[A=a|S=s]$.
+       \item \textbf{Вредносна функција} ($v$): одређује колико су добра стања. Вредност је наше предвиђање очекиване укупне будуће награде. Приметимо да вредност стања зависи од полисе коју пратимо. Такође ако знамо праве вредности за свако стање, лако можемо конструисати полису тако што ``похлепно'' бирамо акцију која ће нас довести у стање највеће вредности.
+	\begin{equation}
+	v_{\pi}(s) = \mathbb{E}_{\pi}[R_t+\gamma R_{t+1}+\gamma^2 R_{t+2}+...| S_t=s]
+	\end{equation}
+    Касније ћемо видети чему служи коефицијент $\gamma$.
+       \item \textbf{Модел}: предвиђа шта ће окружење урадити. Можемо моделовати:
+       	\begin{itemize}
+       	\item Прелазе(транзиције), тј. вероватноћу да из стања $s$ дођемо у стање $s'$ ако смо изабрали акцију $a$:
+            \begin{equation}
+            	\mathcal{P}_{ss'}^a = \mathbb{P}[S'=s'|S=s,A=a]
+            \end{equation}
+
+            \item Награде, тј. очекивану укупну будућу награду ако почињемо из стања $s$ и бирамо акцију $a$:
+         	\begin{equation}
+         	\mathcal{R}_{s}^a = \mathbb{E}[R|S=s,A=a]
+         	\end{equation}\\
+       	\end{itemize}
+	\end{itemize}
+
+    \begin{figure}[h!]
+  	\centering
+  	\begin{subfigure}[b]{0.3\linewidth}
+  	  \includegraphics[width=\linewidth]{slika1_4.png}
+   	  \caption{Полиса.}
+  	\end{subfigure}
+  	\begin{subfigure}[b]{0.3\linewidth}
+  	  \includegraphics[width=\linewidth]{slika1_5.png}
+   	 \caption{Вредносна функција.}
+  	\end{subfigure}
+  	\begin{subfigure}[b]{0.3\linewidth}
+   	 \includegraphics[width=\linewidth]{slika1_6.png}
+   	 \caption{Модел.}
+  	\end{subfigure}
+        \caption{Компоненте агента на примеру лавиринта. Циљ је што брже изаћи из лавиринта. За сваки корак губи се један поен (добија се награда -1).}
+	\end{figure}
+    
+\newpage 
+
+    \noindent Категоризација агената према томе да ли садрже полису или вредносну фукцију:
+    	\begin{itemize}
+    	\item Засновани на вредносној функцији.
+            \item Засновани на полиси.
+            \item Актер-критичари: садрже и полису и вредносну функцију.\\
+    	\end{itemize}
+\noindent Поред овога агенти могу бити без модела или засновани на моделу.\\
+
+\noindent Чак и када експлицитно не памтимо полису, у случају агената заснованих на вредности, она и даље постоји. У том случају, полиса је бирање акције која има максималну очекивану награду. Полиса је оно што нам је заправо битно. Ако знамо оптималну полису, знамо како да доносимо најбоље одлуке, што је и циљ учења са појачавањем. Међутим, често ће бити ефективније да полису не учимо директно, већ преко вредносне функције.\\
+
+	\noindent Два основна проблема у секвенцијалном доношењу одлука којима ћемо се бавити су \textbf{учење} и \textbf{планирање}. Битно је да разумемо разлику између ова два појма. При учењу, агент не зна како окружење фунционише, док је код планирања начин функционисања окружења ``уграђен'' у агентов систем доношења одлука.\\
+
+    \noindent \textbf{Дилема истраживања и експлоaтације} је једно од кључних питања учења са појачавањем. Када да истражујемо а када да експлоатишемо стечено знање? Учење са појачавањем је учење методом покушаја и грешки. Да би учили морамо да истражујемо али истовремено желимо да минимизујемо успут изгубљену награду. Нпр. аутомобил који учи да вози, при скретању мора да покуша различита окретања волана да би научио које је правилно, али није исплативо покушати све могућности јер би на тај начин слупали јако велики број аутомобила. Још један пример је систем реклама на интернету. Страница углавном кориснику приказује рекламу за коју верује да ће највероватније бити кликнута, али понекад је корисно приказати нову рекламу јер се она кориснику може више свидети. \\
+
+    \noindent Још једна подела учења са појачавањем је на проблем предвиђања и проблем контроле. Предвиђање подразумева да предвидимо очекивану укупну награду за дату полису. Приликом контроле желимо да нађемо најбољу полису. Видећемо да је решавање проблема предвиђања битан корак за проблем контроле.
+
+     \begin{figure}[h!]
+  	\centering
+        \begin{subfigure}[h]{0.3\linewidth}
+        \centering
+  			\includegraphics[width=\linewidth]{slika1_7.png}
+      	    \caption{Таксономија учења са појачавањем}
+        \end{subfigure}
+  	\begin{subfigure}[b]{0.1\linewidth}
+        \centering $\ $
+    \end{subfigure}
+        \begin{subfigure}[h]{0.3\linewidth}
+        \centering
+  			\includegraphics[width=\linewidth]{slika1_3.png}
+       		 \caption{Интеракција агента са окружењем.}
+        \end{subfigure}
+	\end{figure}
+    \newpage
+    
+
+    \section{Марковљев процес одлучивања}
+
+    \textbf{MDP} формално описује окружење, у случају када је оно потпуно прегледно. У овом поглављу ћемо дефинисати најбитније појмове, којима карактеришемо сваки MDP и над којима вршимо учење. \\
+
+    \subsection{Марковљев ланац}
+    \noindent Захваљујући Марковљевом својству можемо дефинисати вероватноћу прелаза из стања $s$ у стање $s'$ као:
+     \begin{equation}
+     	\mathcal{P}_{ss'}=\mathbb{P}[S_{t+1}=s'|S_t=s]
+     \end{equation}
+
+     \noindent Све вероватоће можемо сместити у матрицу чиме добијамо матрицу вероватноће прелаза: $\dots$
+       \begin{equation}
+       	\mathcal{P} = \begin{bmatrix} \mathcal{P}_{11} & \dots & \mathcal{P}_{1n} \\
+            \vdots & \ddots & \vdots \\
+            \mathcal{P}_{n1} & \dots & \mathcal{P}_{nn} \end{bmatrix}
+       \end{equation}\\
+
+    \begin{definicija}
+    	\normalfont
+    	\textbf{Марковљев процес (или Марковљев ланац)} (MP) је уређени пар $\left<\mathcal{S},\mathcal{P}\right>$, где:
+        \begin{itemize}
+        	\item $\mathcal{S}$ је коначан скуп стања.
+            \item $\mathcal{P}$ је матрица вероватноће прелаза
+        \end{itemize}
+    \end{definicija}
+
+    \noindent Марковљев процес је насумичан процес без меморије, тј. низ насумичних стања са Марковљевим својством.
+
+    \begin{figure}[h!]
+  	\centering
+  	\includegraphics[width=0.7\linewidth]{slika2_1.png}
+        \caption{Пример студентског MP-а \cite{DS1}. Сваку епизоду (дан) студент започиње у стању \textit{Class 1}. Епизода се завршава када дође у стање \textit{Sleep}. Бројеви на стрелицама представљају вероватноће преласка између стања. Једне од могућих епизода су \textit{C1, C2, C3, Pass, Sleep} и \textit{C1,FB,FB,C1,C2,Sleep}.}
+	\end{figure}
+    
+    \subsection{Марковљев наградни процес}
+
+    \begin{definicija}
+    	\normalfont
+        \textbf{Марковљев наградни процес} је уређена четворка $\left<\mathcal{S},\mathcal{P},\mathcal{R},\gamma \right>$,где:
+        \begin{itemize}
+        \item $\mathcal{S}$ је коначан скуп стања.
+        \item $\mathcal{P}$ је матрица вероватноће прелаза.
+        \item $\mathcal{R}$ је наградна функција, $\mathcal{R}_s=\mathbb{E}[R_{t+1}|S_t=s]$.
+        \item $\gamma$ је фактор попуста, $\gamma\in [0,1]$.
+        \end{itemize}
+    \end{definicija}
+
+    \noindent Марковљев наградни процес (MRP) је Марковљев ланац са наградама.\\
+
+     \begin{figure}[h!]
+  	\centering
+  	\includegraphics[width=0.7\linewidth]{slika2_2.png}
+        \caption{Студентски MRP. Награде се добијају по изласку из стања. Награда зависи само од стања из ког се излази, не и од изабране акције.}
+	\end{figure}
+
+     \begin{definicija}
+     \normalfont
+     	\textbf{Поврат $G_t$} је укупна кумулативна награда са попустом, почевши oд тренутка $t$.
+        \begin{equation}
+        G_t=R_{t+1}+\gamma R_{t+2} + ...=\sum_{k=0}^{\infty} \gamma^k R_{t+k+1}
+        \end{equation}
+     \end{definicija}
+
+     \noindent Фактор попуста одређује колико су нам тренутно битне будуће награде. Што је ближи 0, више преферирамо тренутне награде, а што је ближи 1, небитније нам је када награде стижу.\\
+
+     \noindent Зашто користимо фактор попуста?
+     \begin{itemize}
+     \item Избегавамо бесконачне поврате у случају цикличних или бесконачних MDP-ева. Проблем са бесконачним повратима је то што не можемо разликовати трајекторије. Нпр. агент неће моћи да разликује циклус који нам у сваком потезу доноси награду $+1000$ од оног који нам сваки потез доноси $+1$,$\ $јер је $\mathcal{1}*1000=\mathcal{1}*1=\mathcal{1}$, а први циклус је очигледно бољи.
+     \item На овај начин урачунавамо непрецизност нашег модела. Много је вероватније да ће награде у далекој будућности бити погрешно процењене, па оне тренутно за нас вреде мање.
+     \end{itemize}
+
+     \begin{definicija}
+     \normalfont
+     	\textbf{Вредносна функција стања} за MRP је очекивани поврат почевши из стања $s$:
+        \begin{equation}
+        	v(s)=\mathbb{E}[G_t|S_t=s]
+        \end{equation}
+     \end{definicija}
+
+     \noindent Циљ при раду са Марковљевим наградним процесима је наћи ову функцију.\\
+
+     \begin{figure}[h!]
+  	\centering
+        \begin{subfigure}[b]{0.45\linewidth}
+        	\includegraphics[width=\linewidth]{slika2_3.png}
+        \end{subfigure}
+        \begin{subfigure}[b]{0.45\linewidth}
+        	\includegraphics[width=\linewidth]{slika2_5.png}
+        \end{subfigure}
+  	\caption{Вредносна функција стања за студентски MRP за два избора попуста $\gamma$.}
+	\end{figure}
+
+   	\subsubsection{Белманове једначине за MRP}
+\begin{teorema}
+\normalfont
+    Вредносну функцију можемо раставити на два дела: тренутну награду $R_{t+1}$ и вредност наредног поља са попустом $\gamma v(S_{t+1})$:
+    \begin{equation}
+    	v(s)=\mathbb{E}[R_{t+1}+\gamma v(S_{t+1})|S_t=s]
+    \end{equation}
+\end{teorema}
+
+\begin{dokaz}
+\normalfont
+\begin{align}
+    	v(s)&=\mathbb{E}[G_t|S_t=s]\\
+       	&=\mathbb{E}[R_{t+1}+\gamma R_{t+2}+ \gamma^2 R_{t+3}+...|S_t=s]\\
+            &=\mathbb{E}[R_{t+1}+\gamma (R_{t+2}+ \gamma R_{t+3}+...)|S_t=s]\\
+            &=\mathbb{E}[R_{t+1}+\gamma G_{t+1}|S_t=s]\\
+            &=\mathbb{E}[R_{t+1}+\gamma v(S_{t+1})|S_t=s]
+    \end{align}
+\end{dokaz}
+
+
+   \noindentБелманову једначину је могуће концизно записати у матричном облику: $v=\mathcal{R}+\gamma \mathcal{P}$.
+   \begin{equation}
+   	\begin{bmatrix}
+    	v(1)\\
+        \vdots\\
+        v(n)
+    \end{bmatrix}=
+    \begin{bmatrix}
+    	\mathcal{R}_1\\
+        \vdots\\
+        \mathcal{R}_n
+    \end{bmatrix} + \gamma
+    \begin{bmatrix} \mathcal{P}_{11} & ... & \mathcal{P}_{1n} \\
+            \vdots\\
+            \mathcal{P}_{n1} & ... & \mathcal{P}_{nn} \end{bmatrix}
+    \begin{bmatrix}
+    	v(1)\\
+        \vdots\\
+        v(n)
+    \end{bmatrix}   \\
+   \end{equation}
+
+   \noindentОво је линеарна једначна па је можемо директно решити:
+   \begin{align}
+   	v&=\mathcal{R}+\gamma\mathcal{P}v\\
+        (1-\gamma\mathcal{P})v&=\mathcal{R}\\
+	v&=(1-\gamma\mathcal{P})^{-1}\mathcal{R}
+   \end{align}
+
+   \noindent У општем случају, временска сложеност налажења инверзне матрице је $O(n^3)$, ако имамо $n$ стања. То је превелика сложеност за велике MDP-еве. Бавићемо се итеративним методама за израчунавање вредносне функције као што су: динамичко програмирање, Монте-Карло и Temporal-Difference учење.
+
+   \begin{figure}[h!]
+  	\centering
+  	\includegraphics[width=0.7\linewidth]{slika2_6.png}
+        \caption{Белманове једначине за студентски MRP.\\}
+	\end{figure}
+
+   \subsection{Марковљев процес одлучивања}
+
+   \begin{definicija}
+   \normalfont
+   	\textbf{Марковљев процес одлучивања} је уређена петорка $\left<\mathcal{S},\mathcal{A},\mathcal{P},\mathcal{R},\gamma \right>$
+	\begin{itemize}
+	\item $\mathcal{S}$ је коначан скуп стања.
+  	\item $\mathcal{A}$ је коначан скуп акција.
+        \item $\mathcal{P}$ је матрица вероватноће прелаза, $\mathcal{P}_{ss'}^a=\mathbb{P}[S_{t+1}=s'|S_t=s,A_t=a]$.
+        \item $\mathcal{R}$ је наградна функција, $\mathcal{R}_s^a=\mathbb{E}[R_{t+1}|S_t=s,A_t=a]$.
+        \item $\gamma$ је фактор попуста, $\gamma\in [0,1]$.
+	\end{itemize}
+   \end{definicija}
+
+  \noindent Марковљев процес одлучивања је Марковљев наградни процес са доношењем одлука.\\
+
+  \begin{definicija}
+  \normalfont
+  	\textbf{Полиса ($\pi$)} је дистрибуција акција по стањима,
+    \begin{equation}
+   		 \pi(a|s)=\mathbb{P}[A_t=a|S_t=s]
+    \end{equation}
+  \end{definicija}
+
+  \noindent Полиса је стационарна (не мења се током времена) захваљујући Марковљевом својству.\\
+
+  \noindent За дати MDP $\mathcal{M}=\left<\mathcal{S},\mathcal{A},\mathcal{P},\mathcal{R},\gamma \right>$ и полису $\pi$:
+  \begin{itemize}
+  	\item Низ стања $S_1,S_2,...$ је Марковљев ланац $\left<\mathcal{S},\mathcal{P}^{\pi}\right>$
+    \item Низ стања и награда $S_1,R_1,S_2,...$ је Марковљев наградни процес $\left<\mathcal{S},\mathcal{P}^{\pi},\mathcal{R}^{\pi},\gamma \right>$,
+   \item $\mathcal{P}^\pi$ i $\mathcal{R}^\pi$ су укупна вероватноћа по свим могућим акцијама да из стања $s$ дођемо у стање $s'$ и просечна награда по свим могућим акцијама,
+   \begin{equation}
+   	 \mathcal{P}_{ss'}^{\pi}= \sum_{a\in \mathcal{A}}\pi(a|s)\mathcal{P}_{s,s'}^a 
+   \end{equation}
+   \begin{equation}
+   	 \mathcal{R}_{s}^{\pi}= \sum_{a\in \mathcal{A}}\pi(a|s)\mathcal{R}_{s}^a 
+   \end{equation}	
+  
+  \end{itemize}
+
+ \begin{figure}[h!]
+  	\centering
+  	\includegraphics[width=0.7\linewidth]{slika2_7.png}
+        \caption{Студентски MDP. Сада награде зависе и од акције коју бирамо. Овог пута $Pub$ није стање, већ пример стохастичне транзиције из стања $Class 3$ у неко од наредних стања. \\}
+	\end{figure}
+
+ \subsubsection{Вредносне функције}
+
+ \begin{definicija}
+ \normalfont
+ 	Вредносна функција стања (вредност стања) $v_{\pi}(s)$ за MDP је очекивана кумулативна награда (поврат) почевши из стања $s$, и пратећи полису $\pi$:
+   \begin{equation}
+   	 v_{\pi}(s)=\mathbb{E}_{\pi}[G_t|S_t=s]
+    \end{equation}
+ \end{definicija}
+
+ \begin{definicija}
+ \normalfont
+ 	Вредносна функција акција (вредност акције) $q_{\pi}(s,a)$ за MDP је очекивана кумулативна награда (поврат) ако почињемо из стања $s$, бирамо акцију $a$, и пратимо полису $\pi$:
+    \begin{equation}
+   		 q_{\pi}(s,a)=\mathbb{E}_{\pi}[G_t|S_t=s,A_t=a]
+    \end{equation}
+ \end{definicija}
+
+ \subsubsection{Белманове једначине очекивања}
+ \noindent Поново можемо вредносну функцију стања раставити на тренутну награду и вредност наредног стања са попустом, 
+ \begin{equation}
+    v_{\pi}(s)=\mathbb{E}[R_{t+1}+\gamma v_{\pi}(S_{t+1})|S_t=s]
+   \end{equation}
+ \noindent Слично се раставља и вредносна функција акција,
+ \begin{equation}
+    q_{\pi}(s,a)=\mathbb{E}[R_{t+1}+\gamma q_{\pi}(S_{t+1},A_{t+1})|S_t=s,A_t=a]
+ \end{equation}
+
+ \noindent Можемо комбиновати ове две функције, чиме добијамо:
+	\begin{align}
+    v_{\pi}(s)&=\sum_{a \in A}\pi(a|s)q_{\pi}(s,a)\\
+    q_{\pi}(s,a)&=\mathcal{R}_s^a +\gamma\sum_{s' \in \mathcal{S}}\mathcal{P}_{ss'}^av_{\pi}(s') 	\end{align}\\
+
+ \noindent Ако повежемо претходне две једначине, добијамо рекурзивне формуле:
+ 	\begin{equation}
+    v_{\pi}(s)=\sum_{a \in A}\pi(a|s)\left(\mathcal{R}_s^a +\gamma\sum_{s' \in \mathcal{S}}\mathcal{P}_{ss'}^av_{\pi}(s')\right)
+    \end{equation}
+
+    \begin{equation}
+    q_{\pi}(s,a)=\mathcal{R}_s^a +\gamma\sum_{s' \in \mathcal{S}}\mathcal{P}_{ss'}^a\sum_{a' \in A}\pi(a'|s')q_{\pi}(s',a')
+    \end{equation} 
+
+ \noindent Све што нам ове једначине у суштини говоре је да je вредносна функција у неком тренутку једнака збиру тренутне награде и наредне вредносне функције.\\
+
+ \noindent Претходне једначине нам говоре како да нађемо вредносне функције за дату полису, али не и како да нађемо најбољу полису.
+
+  \begin{figure}[h]
+  	\centering
+        \begin{subfigure}[b]{0.45\linewidth}
+        	\includegraphics[width=\linewidth]{slika2_8.png}
+        \end{subfigure}
+  	\begin{subfigure}[b]{0.45\linewidth}
+        	\includegraphics[width=\linewidth]{slika2_9.png}
+        \end{subfigure}
+        \caption{Вредносне функције и Белманове једначине очекивања за студентски MDP.}
+	\end{figure}
+
+ \begin{definicija}
+ \normalfont
+ 	\textbf{Оптимална вредносна функција стања} $v_*(s)$ је највећа могућа вредност неког стања по свим могућим полисама
+    \begin{equation}
+    	v_*(s)=\max_{\pi}v_{\pi}(s)
+    \end{equation}
+ \end{definicija}
+
+ \begin{definicija}
+ \normalfont
+ 	\textbf{Оптимална вредносна функција акције} $q_*(s,a)$ је највећа могућа вредност неке акције по свим могућим полисама
+    \begin{equation}
+    	q_*(s,a)=\max_{\pi}q_{\pi}(s,a)
+    \end{equation}
+ \end{definicija}
+
+ \noindent Да би пронашли оптималну полису довољно је да знамо оптималну вредност свих акција. Према томе, решавање MDP-а се може свести на проналажење $q_*(s,a)$.\\
+
+ 
+
+ \subsubsection{Оптимална полиса}
+ \begin{definicija}
+ \normalfont
+  За две дате полисе $\pi$ и $\pi'$  важи $\pi\geq\pi'$ ако важи $v_\pi(s)\geq v_{\pi'}(s),\forall s$.
+ \end{definicija}
+
+ \begin{teorema}
+  \normalfont
+  За сваки MDP:
+  \begin{itemize}
+  	\item Постоји бар једна оптимална полиса $\pi_*$, која је боља од или једнака свим осталим полисама,\\ $\pi_*\geq \pi,\forall\pi$.
+    \item Све оптималне полисе достижу оптималну вредносну функцију стања, $v_{\pi_*}(s)=v_*(s)$.
+    \item Све оптималне полисе достижу оптималну вредносну функцију акција, $q_{\pi_*}(s,a)=q_*.(s,a)$
+  \end{itemize}
+ \end{teorema}
+
+ \noindent Доказ ове теореме следи на крају наредног поглавља.\\
+
+ \noindent Када знамо $q_*(s,a)$, оптималну полису можемо наћи максимизацијом по $q_*(s,a)$,
+ 	\begin{equation}
+ 		\pi_*(a|s)=\begin{cases}
+ 	1 ,\ a=\underset{{a\in\mathcal{A}}}{\mathrm{argmax}}q_*(s,a)\\
+    0 ,\ \text{u suprotnom}
+ 	\end{cases} 
+ 	\end{equation}
+ 
+ \noindent Дакле, за сваки MDP постоји детерминистичка оптимална полиса.\\
+
+\begin{figure}[h]
+  	\centering
+        \begin{subfigure}[b]{0.45\linewidth}
+        	\includegraphics[width=\linewidth]{slika2_10.png}
+        \end{subfigure}
+  	\begin{subfigure}[b]{0.45\linewidth}
+        	\includegraphics[width=\linewidth]{slika2_11.png}
+        \end{subfigure}
+        \caption{Оптималне вредносне функције стања и акције.}
+\end{figure}
+
+ \begin{figure}[h]
+  	\centering
+        	\includegraphics[width=0.7\linewidth]{slika2_12.png}
+        \caption{Оптимална полиса за студентски MDP.}
+	\end{figure}
+
+ \subsubsection{Белманове једначине оптималности}
+ Белманове једначине оптималности служе налажењу оптималне полисе. И до Белманових једначина оптималности долазимо раздвајањем вредносних функција тако што гледамо корак у будућност.
+
+ \begin{align}
+ 	v_*(s,a)&=\max_aq_*(s,a)\\
+ 	q_*(s,a)&=\mathcal{R}_s^a+\gamma\sum_{s'\in\mathcal{S}}\mathcal{P}_{ss'}^av_*(s')\\
+    v_*(s,a)&=\max_a\left(\mathcal{R}_s^a+\gamma\sum_{s'\in\mathcal{S}}\mathcal{P}_{ss'}^av_*(s')\right)\\
+    q_*(s,a)&=\mathcal{R}_s^a+\gamma\sum_{s'\in\mathcal{S}}\mathcal{P}_{ss'}^a\max_{a'}q_*(s',a')
+ \end{align}
+
+ \noindent Белманове једначине оптималности нису линеарне, па их не можемо директно решити. Постоји мноштво итеративних решења којима ћемо се бавити: итерација вредности, итерација полисе,  Q-учење.\\
+
+ \begin{figure}[h]
+  	\centering
+        	\includegraphics[width=0.7\linewidth]{slika2_13.png}
+        \caption{Белманова једначина оптималности за студентски MDP.}
+	\end{figure}
+
+\noindent Случај итеративне примене неке од једначина на стање или пар стање акција, називамо Белманов оператор (нпр. Белманов оператор оптималности).
+
+ \newpage
+
+ \section{Планирање динамичким програмирањем}
+
+ \noindent У претходном поглављу смо се упознали са основним појмовима везаним за Марковљеве процесе одлучивања. Сада ћемо видети како уз помоћ Белманових једначина можемо оценити неку полису, па потом доћи и до оптималне.\\
+
+ \noindent Подсетимо се да при планирању агент има увид у начин функционисања окружења, па се ради о MDP-у. Шта у нашем контексту значе речи \textbf{динамичко} и \textbf{програмирање}? Проблем је динамички ако има секвенцијалну или временску компоненту. Дакле, за све што се одвија у ``корацимa'' $\ $ кажемо да је динамичко. Програмирање у математичком смислу представља оптимизацију неког ``програма''$,$ у нашем случају полисе. Заједно, ови појмови означавају методе оптимизације секвенцијалних проблема.\\
+
+ \noindentДинамичко програмирање се као метода састоји из три дела: разбијање проблема на мање подпроблеме, решавање тих подпроблема и комбиновање њихових решења.\\ Генeрално за проблеме које на овај начин решавамо морају да важе два својства:
+ \begin{itemize}
+ \item \textbf{Оптимална структура} подразумева да проблем можемо поделити на делове чија искомбинована решења дају решење полазног проблема.
+ \item \textbf{Подпроблеми који се преклапају}. У току решавања, више пута наилазимо на исти подпроблем. Решења памтимо, и следећи пут када наиђемо на исти проблем довољно је да прочитамо већ израчунато, чиме штедимо време.\\
+ \end{itemize}
+
+\begin{figure}[h]
+	\centering
+  	\includegraphics[width=0.5\linewidth]{slika3_0.png}
+  	\caption{Пример проблема са ова два својства. Циљ је наћи дужину пута од чворова S1,S2 и S3 до чвора D. Дужину пута од S1 до D можемо разложити на збир дужина од S1 до A и од A до D. Слично делимо путеве из S2 и S3. Дужину пута од A до D користимо 3 пута, приликом тражења решења за свако од почетних поља. Када би је сваки пут рачунали морали би да прођемо $4+4+4=12$ чворова (A, B, C, D сваки пут). Ако запамтимо дужину пута из чвора A, мораћемо да прођемо $4+1+1=6$ чворова. За већи граф ова разлика била би још већа.}
+\end{figure}
+
+  \noindent Марковљеви процеси одлучивања задовољавају оба својства. Белманове једначине дају начин да проблем поделимо, а вредносне функције чувају израчуната решења.\\
+  Динамичко програмирање се у MDP-у користи за:
+  \begin{itemize}
+  	\item Предвићање: за дати MDP и полису (што је исто што и MRP) израчунава вредносну функцију.
+    \item Контролу: за дати MDP даје оптималну вредносну функцију и оптималну полису.
+  \end{itemize}
+
+\newpage
+
+ \subsection{Оцена полисе}
+
+ \noindent Оценити дату полису значи наћи њену вредносну функцију стања. Ово постижемо итеративном применом Белманове једначине очекивања, синхронисано, на сва стања одједном ($V_\pi^1\rightarrow V_\pi^2\rightarrow...\rightarrow v_\pi$). Са $V$ означавамо оцену вредности а са $v$ праву вредност. У сваком кораку сва стања ажурирамо формулом:
+ \begin{equation}
+ 		V_{\pi}^{k+1}(s)=\sum_{a \in A}\pi(a|s)\left(\mathcal{R}_s^a +\gamma\sum_{s' \in \mathcal{S}}\mathcal{P}_{ss'}^aV_{\pi}^k(s')\right)
+ \end{equation}
+
+ \begin{figure}[h]
+	\centering
+  	\includegraphics[width=0.5\linewidth]{slika3_1.png}
+  	\caption{Визуелизација Белманове једначине очекивања.}
+\end{figure}
+
+  \begin{figure}[h]
+	\centering
+    \begin{subfigure}{0.2\linewidth}
+    	\includegraphics[width=\linewidth]{slika3_2.png}
+    \end{subfigure}
+  	\begin{subfigure}{0.35\linewidth}
+    	\includegraphics[width=\linewidth]{slika3_3.png}
+    \end{subfigure}
+    \begin{subfigure}{0.35\linewidth}
+    	\includegraphics[width=\linewidth]{slika3_4.png}
+    \end{subfigure}
+  	\caption{Пример итеративне оцене полисе \cite{DS2}. Стања су поља матрице. У сваком кораку агент може прећи у једно од суседних поља матрице (горе, доле, лево или десно). За сваки протекли корак добија се награда -1, сива поља су терминална. Агент прати насумичну полису.}
+\end{figure}
+
+ \newpage
+
+ \subsection{Итерација полисе}
+
+ \noindent Итерацијом долазимо до оптималне полисе. Алгоритам се састоји из два дела: за дату полису $\pi$:
+ 	\begin{itemize}
+ 	\item Вршимо оцену полисе, чиме налазимо $v_\pi$,
+        \item Унапређујемо полису тако што бирамо акције похлепно у односу на $v_\pi:$ \begin{equation}
+        \pi'=greedy(v_\pi)
+\end{equation}
+ 	\end{itemize}
+
+\noindent Похлепно значи да бирамо акцију која максимизује $\mathcal{R}_s^a +\gamma\sum_{s' \in \mathcal{S}}\mathcal{P}_{ss'}^av_{\pi}(s')$.\\
+
+\noindent Овај поступак понављамо до конвергенције. У општем случају биће потребан велики број корака.\\
+
+\begin{figure}[h!]
+	\centering
+  	\includegraphics[width=0.9\linewidth]{slika3_6.png}
+  	\caption{Итерација полисе. Ово је пример продавнице која изнајмљује аутомобиле \cite{DS3} на две локације. На свакој од њих може бити највише 20 аутомобила. Стања су уређени парови (број возила на првој локацији, број возила на другој локацији) на крају дана. У току ноћи можемо пребацити до 5 аутомобила са једне локације на другу, и то су акције. Добијамо награду 10\textdollar$\ $за сваки изнајмљен ауто. Број захтева и враћених аутомобила у току дана је насумичан, али знамо да у просеку на првој локацији имамо $3$ захтева и $3$ враћена возила, а на другој $4$ захтева и $2$ враћена возила. На сликама, свака тачка представља неко стање, а бројеви унутар ограничених површина представљају број аутомобила које треба да преместимо са прве на другу локацију. Алгоритам већ после 4 итерације долази до оптималне полисе. Видимо да ће чешће бити оптимално да пребацујемо аутомобиле са прве на другу локацију, што је и логично јер са друге одлази више аутомобила него што долази. Последња слика представља оптималну вредносну функцију сваког стања.}
+\end{figure}
+
+\begin{figure}[h!]
+	\centering
+  	\includegraphics[width=0.5\linewidth]{slika3_5.png}
+  	\caption{Визуелизација итерације полисе.}
+\end{figure}
+
+
+ \subsubsection{Доказ конвергенције}
+ \begin{lema}
+ \normalfont
+  	Нека нам је дата детерминистичка полиса $\pi$ и почетно стање $s$. Ако један корак пратимо полису $\pi'$, добијену као $\pi'(s)=\underset{{a\in\mathcal{A}}}{\mathrm{argmax}}q_*(s,a)$, повећаћемо функцијску вредност почетног стања.
+ \end{lema}
+ \begin{dokaz}
+ \normalfont Нека је нова вредност стања једнака је $q_\pi(s,\pi'(s))$. Тада важи:
+ 	\begin{equation}
+ 	q_\pi(s,\pi'(s))=\max_{a\in\mathcal{A}}q_{\pi}(s,a)\geq q_\pi(s,\pi(s))=v_\pi(s)
+ 	\end{equation} $\qedsymbol$
+ \end{dokaz}
+
+ \begin{teorema}
+ \normalfont
+  Итерација полисе увек конвергира оптималној полиси.
+ \end{teorema}
+ \begin{dokaz}
+ \normalfont Нека је почетна полиса $\pi$, а $\pi'$ полиса добијена као $\pi'(s)=\underset{{a\in\mathcal{A}}}{\mathrm{argmax}}q_*(s,a)$. Покажимо прво да је $\pi'\geq \pi$. На основу леме 4.2.1 следи:
+ \begin{align}
+ 	v_\pi(s)&\leq q_\pi(s,\pi'(s)) = \mathbb{E}_{\pi'}[R_{t+1}+\gamma v_\pi(S_{t+1})|S_t=s]\\
+    	&\leq \mathbb{E}_{\pi'}[R_{t+1}+\gamma q_\pi(S_{t+1},\pi'(S_{t+1}))|S_t=s]\\
+            &\leq \mathbb{E}_{\pi'}[R_{t+1}+\gamma R_{t+2} + \gamma^2 q_\pi(S_{t+2},\pi'(S_{t+2}))|S_t=s]\\
+            &\leq \mathbb{E}_{\pi'}[R_{t+1}+\gamma R_{t+2} + ...|S_t=s] = v_{\pi'}(s)
+ \end{align}
+	Ако побољшање престане, то јест ако $v_{\pi'}(s)=v_\pi(s), \forall s$, важиће:
+    \begin{equation}
+    	q_\pi(s,\pi'(s)) = \max_{a\in\mathcal{A}} q_\pi(s,a) = q_\pi(s,\pi(s))=v_\pi(s)
+    \end{equation}
+    Али тада је задовољена једна од Белманових једначина оптималности:
+    \begin{equation}
+    	v_\pi(s)=\max_{a\in\mathcal{A}}q_\pi(s,a)
+    \end{equation}
+    Одатле следи да је $v_\pi(s)=v_*(s), \forall s$, чиме је теорема доказана. $\qedsymbol$\\
+ \end{dokaz}
+
+ \noindentДа ли је неопходно да сваки пут оцена полисе конвергира $v_\pi$? Можемо се зауставити и раније. Да би извршили корак побољшања полисе потребно је да за свако стање знамо акцију са највећом вредносном функцијом. Није увек неопходно знати баш тачне вредности акција да би знали која је најбоља. Могли би да се зауставимо када промене вредносних функција постану довољно мале, или једноставно након сваких $k$ итерација.\\
+\noindent Заправо уопште не морамо да итерирамо до вредносне функције која нам за свако поље даје најбољу акцију пратећи дату полису. Зашто бисмо чекали на сва стања, ако можемо одмах искористити стечено знање у неким од њих? Када је $k=1$, тј. када радимо само један корак процене и одмах потом похлепно побољшавамо полису долазимо до алгоритма \textbf{итерације вредносне функције}.
+
+\begin{figure}[h]
+	\centering
+  	\begin{subfigure}{0.30\linewidth}
+    	\includegraphics[width=\linewidth]{slika3_7.png}
+    \end{subfigure}
+    \begin{subfigure}{0.1\linewidth}
+    \end{subfigure}
+    \begin{subfigure}{0.48\linewidth}
+    	\includegraphics[width=\linewidth]{slika3_8.png}
+	\end{subfigure}
+	\caption{Наставак примера са матрицом из секције 4.1. Ово су полисе које би добили похлепним побољшањем после сваке од итерација. Видимо да већ у трећој итерацији знамо која је најбоља акција у сваком од стања.}
+\end{figure}
+
+\newpage
+
+ \subsection{Итерација вредносне функције}
+
+ \noindent Као што смо рекли, итерација вредносне функције је специјалан случај итерације полисе. При сваком кораку вршимо операцију:
+ \begin{equation}
+ 	V_{k+1}(s)=\sum_{a \in A}\pi(a|s)\left(\mathcal{R}_s^a +\gamma\sum_{s' \in \mathcal{S}}\mathcal{P}_{ss'}^aV_k(s')\right)
+ \end{equation}
+
+ \noindent Сада $\pi$ ажурирамо после сваке примене ове операције. То значи да ће, за разлику од итерације полисе, овде $\pi$ увек бити похлепна полиса. Због тога њу није потребно експлицитно памтити. Замењујемо је једним оператором максимизације:
+ \begin{equation}
+ 	V_{k+1}(s)=\max_{a\in\mathcal{A}}\left(\mathcal{R}_s^a +\gamma\sum_{s' \in \mathcal{S}}\mathcal{P}_{ss'}^aV_k(s')\right)
+ \end{equation}
+
+ \noindent Сада немамо експлицитну полису, радимо директно на вредносној фукцији, па отуд и назив итерација вредносне фукције. Приметимо да је претходна једначина заправо Белманова једначина оптималности. То значи да је Белманова једначина очекивања, у случају када је полиса похлепна у односу на вредносне функције, ништа друго него једначина оптималности.\\
+
+ \noindent Сагледајмо овај алгоритам и на други начин, почевши из Белманових једначина оптималности, без разматрања било какве полисе. Знамо да смо нашли оптималну вредносну функцију када су оне задовољене. Осврнимо се на једно својство оптималних полиса које нам може помоћи да додатно мотивишемо итеративну примену Белмановог оператора оптималности.
+
+ \begin{teorema}
+ \normalfont \textbf{(Принцип оптималности)}: Полиса $\pi(a|s)$ достижe оптималну вредност из стања $s$, $v_\pi(s)=v_*(s)$, ако и само ако за свако стање $s'$ доступно из $s$, $\pi$ достиже оптималну вредност за то стање, $v_\pi(s')=v_*(s)$.
+ \end{teorema}
+
+ \noindent Дакле, ако знамо решење подпроблема $v_*(s')$, вредност $v_*(s)$ можемо наћи гледањем један корак у будућност:
+ \begin{equation}
+    v_*(s) = \max_{a\in\mathcal{A}} \left(\mathcal{R}_s^a + \gamma \sum_{s'\in\mathcal{S}}\mathcal{P}_{ss'}^av_*(s')\right)\\
+ \end{equation}
+
+\noindent Намеће се идеја о итеративној примени Белманових оператора оптималности. Али да ли она заиста конвергира? Одговор на ово питање је потврдан и у наредном одељку ћемо видети како да то и докажемо.\\
+
+\noindent Како можемо интуитивно схватити начин функционисања овог алгоритма? Замислимо окружење у којем постоји једно терминално стање. За улазак у то стање добија се велика позитивна награда ($+100$), а за остала мала негативна ($-1$). Иницијализујемо вредносну функцију за свако стање на $0$. После првог корака ће вредност сваког стања бити вредност тренутне награде, дакле $+100$ за терминално и $-1$ за остала. При другом кораку, стања суседна терминалном ће узети у обзир велику награду која се из њега добија, јер се она сада налази у његовој вредносној функцији. Зато ће после другог корака вредносна функција и ових стања бити велика ($-1+\gamma V(terminal)$). У наредном кораку, велика награда ће доћи до стања удаљених два корака од терминалног, итд. Награде се на овај начин пропагирају кроз цео простор. Тек када све битне награде дођу до неког стања алгоритам ће знати која је најбоља акција у њему.
+
+\begin{figure}[h]
+	\centering
+  	\includegraphics[width=0.8\linewidth]{slika3_9.png}
+  	\caption{Пример итерације вредносне функције. Циљ је доћи у горње лево (терминално) поље. За сваку транзицију добија се награда $-1$.}
+\end{figure}
+
+   \subsection{Доказ конвергенције оцене полисе и итерације вредносне функције}
+ \noindent Како знамо да итерација вредносне функције конвергира $v_*$, или да итеративна оцена полисе конвергира $v_\pi$, а самим тим и да итерација полисе конвергира $v_*$? Да ли су ова решења јединствена или постоје локални максимуми? Колико брзо конвергирају наши алгоритми?
+Одговор на ова питања даје нам теорема о контракцијама.\\
+
+\noindent Размотримо векторски простор $\mathcal{V}$ свих могућих вредносних функција стања. Овај простор има $|\mathcal{S}|$ димензија. Свака тачка у простору представља једну вредносну функцију $v$. Показаћемо да применом Белманових једначина приближавамо ове тачке захваљујући чему оне конвергирају јединственом решењу.\\Меримо удаљеност између тачака $u$ и $v$ преко $\mathcal{1}$-норме, која представља максимални елемент вектора:
+\begin{equation}
+    ||u-v||_{\mathcal{1}}=\max_{s\in\mathcal{S}}|u(s)-v(s)|
+ \end{equation}
+
+Означимо Белманов оператор очекивања са $T^\pi$,
+\begin{equation}
+    T^\pi(v) = \mathcal{R}^\pi + \gamma\mathcal{P}^\pi v
+\end{equation}
+
+Контракције су функције на метричком простору $(\mathcal{V},d)$ за које важи $d(f(x),f(y))\leq k d(x,y)$, где је $\mathcal{V}$ векторски простор а $d$ функција која мери удаљеност.\\Оператор $T^\pi$ је $\gamma$ контракција, тј. приближава тачке бар $\gamma$ пута,
+\begin{align}
+	||T^\pi(u)-T^\pi(v)||_{\mathcal{1}} &= ||(\mathcal{R}^\pi+ \gamma \mathcal{P}^\pi u) - (\mathcal{R}^\pi+ \gamma \mathcal{P}^\pi v)||_{\mathcal{1}}\\
+    &= || \gamma \mathcal{P}^\pi (u-v)||_{\mathcal{1}}\\
+    &\leq || \gamma \mathcal{P}^\pi ||u-v||_{\mathcal{1}}||_{\mathcal{1}}\\
+     &\leq \gamma \||u-v||_{\mathcal{1}}\\
+\end{align}
+
+\begin{teorema}
+\normalfont
+За сваки метрички простор $\mathcal{V}$ који је затворен под оператором $T(v)$, где је $T$ $\gamma$-контракција, важи: $T$ конвергира јединственој фиксној тачки брзином $\gamma$ \\
+\end{teorema}
+
+\noindent На основу претходне теореме, Белманов оператор очекивања има фиксну тачку, а знамо да $v_\pi$ задовољава ту Белманову једначину, што значи да је баш то фиксна тачка. Овим смо доказали да итеративна оцена полисе конвергира $v_\pi$, чиме смо допунили претходни доказ да итерација полисе конвергира $v_*$.\\ И Белманову једначину оптималности можемо посматрати као оператор над простором вредносних функција. На сличан начин се доказује да тај оператор представља контракцију чија је фиксна тачка $v_*$
+
+\subsection{Преглед обрађених алгоритама}
+
+\begin{center}
+\begin{tabular}{ |m{0.2\linewidth}|m{0.4\linewidth}|m{0.2\linewidth}| }
+ \hline
+ \textbf{Проблем} & \textbf{Белманова једначина} & \textbf{Алгоритам} \\
+ \hline\hline
+ Предвиђање & Белманова једначина очекивања & Итеративна оцена полисе \\
+ \hline
+ Контрола & Белманова једначина очекивања + похлепно побољшање полисе & Итерација полисе \\
+ \hline
+ Контрола & Белманова једначина оптималности & Итерација вредносне функције \\
+ \hline
+\end{tabular}
+\end{center}
+
+   \noindentЗа алгоритме које смо у овом поглављу обрадили довољна је била вредносна функција стања. Временска сложеност итерације вредносне функције је $O(mn^2)$ по итерацији, за $n$ стања и $m$ акција (из сваког стања разматрамо: сваку акцију и сва стања у која том акцијом можемо доћи). Када би у овим алгоритмима користили вредносну функцију акција, сложеност би била $O(m^2n^2)$ по итерацији. Видећемо да је у случају контроле без модела, и поред лошије сложености, неопходно користити $q(s,a)$. \\
+
+\newpage
+
+\section{Предвиђање без модела}
+
+\noindent У прошлом поглављу научили смо како се решавају Марковљеви процеси одлучивања. Користили смо чињеницу да имамо увид у динамику MDP-a (вероватноће прелаза у одређена стања при одређеним акцијама). Ово није случај у већини реалних проблема. За сва окружења и даље постоји MDP на основу којег се мења само окружење, али га ми или не можемо сазнати, или је једноставно превише компликован. Замислимо робота који учи да шутира лопту. Стање MDP-a у том случају је распоред свих молекула на фудбалском терену, што очигледно није погодна репрезентација. Сада ћемо размотрити алгоритме који врше оцену полисе када динамика окружења није позната. 
+
+\subsection{Монте Карло (MC) учење}
+
+\noindent Монте Карло методе користе врло једноставну идеју: вредносна функција је једнака очекиваној вредности поврата. Циљ нам је да научимо $v_\pi$ из епизода виђених пратећи полису $\pi$:
+\begin{equation}
+    S_1,A_1,R_2,...,S_k \sim \pi
+ \end{equation}
+
+Подсетимо се да је поврат једнак укупној награди са попустом:
+\begin{equation}
+    G_t=R_{t+1}+\gamma R_{t+2} + ... + \gamma^{T-1}R_T
+  \end{equation}
+
+А да је вредносна функција једнака очекиваном поврату:
+\begin{equation}
+    v_\pi(s)=\mathbb{E}_\pi[G_t|S_t=s]
+ \end{equation}
+
+Монте Карло оцена полисе користи експериментално добијену средњу вредност уместо очекиване вредности.
+
+\noindent Да би оценили вредност стања $s$, за свако појављивање тог стања у свакој епизоди:
+\begin{itemize}
+	\item Повећавамо бројач посета: $N(s)=N(s)+1$
+    \item Повећавамо укупни поврат: $S(s)=S(s)+G_t$
+\end{itemize}
+Вредост стања се рачуна као $V(s)=S(s)/N(s)$. Према закону великих бројева $V(s)\rightarrow v_\pi(s)$ када $N(s)\rightarrow\mathcal{1}$.\\
+
+\noindent Размотримо Монте Карло оцену на примеру поједностављеног Блек Џека \cite{DS4}. Свако стање је одређено са три броја: сума агентових карата (12-21), карта коју дилер показује (ас-10) и да ли агент има aса (да-не).\\ Могуће акције су stick (агент више не добија карте, епизода се завршава) и twist (агент добија још једну карту).\\
+Награде за stick су:
+\begin{itemize}
+	\item $+1$ ако је сума агентових карата $>$ сума дилерових карата
+    \item $0$ ако су једнаке
+    \item $-1$ ако је мања
+\end{itemize}
+Награде за twist су:
+\begin{itemize}
+    \item $-1$ ако сума агентових карата > 21 (и епизода се завршава)
+    \item $0$ у супротном
+\end{itemize}
+\newpage 
+\noindent Агент аутоматски бира twist ако му је сума карата мања од 12 јер тиме сигурно неће прећи 21.
+Агент прави једноставну полису: stick ако је сума карата $\geq 20$, иначе twist.
+
+\noindent После 10 и 500 хиљада епизода, добијамо следеће вредносне функције:
+
+\begin{figure}[h!]
+	\centering
+  	\includegraphics[width=0.9\linewidth]{slika5_0d.png}
+  	\caption{Вредносне функције у примеру Блек Џека.}
+\end{figure}
+
+\noindent Није неопходно чувати и $N$ и $S$, можемо итеративно рачунати средњу вредност:
+\begin{align}
+	\mu_k &= \frac{1}{k} \sum_{j=1}^k x_j\\
+    &=\frac{1}{k}(x_k+\sum_{j=1}^{k-1}x_j)\\
+    &=\frac{1}{k}(x_k+(k-1)\mu_{k-1})\\
+    &=\mu_{k-1}+\frac{1}{k}(x_k-\mu_{k-1})
+\end{align}
+Разлику $x_k-\mu_{k-1}$ можемо схватити као грешку процене а $\frac{1}{k}$ као величину корака којим се крећемо у смеру $x_k$. За $k=1$, било би $\mu_k=x_k$. Све итеративне оцене које се користе имају овакав облик: нова процена $=$ стара процена $+$ величина корака $*$ грешка.\\
+
+\noindentЗа проблеме који нису стационарни, корисно је увести могућност заборављања искуства. Ово можемо постићи фиксном величином корака $\alpha$ ($\alpha\in[0,1]$):
+\begin{equation}
+	V(S_t)=V(S_t)+\alpha(G_t-V(S_t))
+\end{equation}
+На тај начин, удео вредности у суми опада експоненцијално, што се лако види ако претходну формулу презапишемо:
+\begin{align}
+	V(S_t)&=(1-\alpha)V(S_t) + \alpha G_t\\
+    	  &= \alpha G_t + (1-\alpha)(\alpha G_{t-1} + \alpha(1-\alpha)G_{t-2}+ \dots + \alpha(1-\alpha)^{t-2}G_1)\\
+          &= \alpha G_t + \alpha(1-\alpha) G_{t-1} +\alpha(1-\alpha)^2G_{t-2}+ \dots + \alpha(1-\alpha)^{t-1}G_1
+\end{align}
+
+\noindentЗаборављање искуства ће бити битно при тражењу оптималне полисе, зато што ћемо тада мењати полису а самим тим ће се мењати и праве вредности вредносне функције.\\
+
+\noindent MC методе уче директно из виђених епизода, али морамо да сачекамо крај епизоде да би ажурирали вредносне функције, што доноси низ ограничења (нпр. не може се применити на случај MDP-ева у којима епизоде јако дуго трају или се никада не завршавају).\\
+
+\subsection{Temporal-Difference (TD) учење}
+
+\noindent Слично Монте Карло учењу, TD методе уче директно из виђених епизода и не користе модел. Међутим, ове методе уче из непотпуних епизода, поступком који се назива бутстрепинг. Бутстрепинг значи да тренутну процену вршимо на основу неке друге процене. У MC учењу смо морали да сачекамо да се епизода заврши,а у најједноставнијој верзији TD учења ћемо оцену померати у смеру збира тренутне награде  и процене вредносне функције наредног стања.\\
+
+\noindentФормула за итеративно ажурирање вредносне функције:
+\begin{equation}
+    V(S_t) = V(S_t) + \alpha(R_{t+1}+\gamma V(S_{t+1})-V(S_t))
+\end{equation}
+
+$R_{t+1}+\gamma V(S+{t+1})$ се назива TD мета. $\delta_t= R_{t+1}+\gamma V(S+{t+1}) - V(S_t)$ је TD грешка.\\
+
+\subsection{Разлике TD и MC учења}
+
+\noindent Замислите самовозећи аутомобил којем изненада на пут излети друго возило. Аутомобил није на време схватио да треба да закочи, али неким чудом возила у пуној брзини су се мимоишла и није дошло до судара. Ако користимо TD, велика негативна награда коју аутомобил очекује када се приближи возилу ће се пропагирати у претходна стања и научиће да је требао почети кочење раније. Међутим, ако користимо MC, аутомобил ће видети само позитивну крајњу награду и неће схватити да је био у лошој ситуацији. У овом примеру TD очигледно даје боље резултате.\\
+
+\noindent Размотримо још један пример. Колима се враћамо кући из канцеларије и меримо време путовања.\\
+
+\begin{center}
+\begin{tabular}{ |m{0.3\linewidth}|m{0.15\linewidth}|m{0.15\linewidth}|m{0.15\linewidth}| }
+ \textbf{Стање} & \textbf{Протекло време} & \textbf{Процењено преостало време} & \textbf{Процењен укупно време} \\
+ излазимо из канцеларије & 0 & 30 & 30 \\
+ стижемо до кола, пада киша & 5 & 35 & 40 \\
+ на аутопуту нема гужве&  20 & 15 & 35\\
+ испред нас је камион & 30 & 10 & 40\\
+ улазимо у своју улицу & 40 & 3 & 43\\
+ стигли смо кући & 43  & 0& 43\\
+\end{tabular}
+\end{center}
+
+\newpage 
+
+\begin{figure}[h]
+	\centering
+  	\includegraphics[width=0.9\linewidth]{slika5_1.png}
+  	\caption{Разлике у променама вредносних функција за TD и MC \cite{DS4}.}
+\end{figure}
+
+\subsubsection{Компромис између пристрасности и дисперзије}
+
+\noindent Нека је $\theta$ параметар чију вредност желимо да оценимо, а $T_n$ наша оцена тог параметра. Кажемо да је оцена непристрасна ако важи $\mathbb{E}[T_n]=\theta$.\\
+
+\noindent Дисперзија нам говори колико је оцена "раширена" $,$ тј. колико је велик опсег могућих вредности те оцене. Процењена вредносна функција стања представља случајну променљиву, јер ће различита покретања алгоритма наилазити на различито искуство, па ће се и оцена вредносних функција разликовати. Када кажемо дисперзија у контексту алгоритма учења са појачавањем, мислимо на дисперзију вредносне функције одређеног стања. Дакле, дисперзија нам даје информацију о томе колико је наша процена осетљива на различито искуство.\\
+
+\noindent Дисперзија и пристрасност су извори грешке. Они одређују колико ће процена вредносне функције успети да се приближи правој вредности. Углавном су повезани тако да смањење једног доводи до повећања другог.\\
+
+\noindent Поврат $G_t=R_{t+1}+\gamma R_{t+2}+...\gamma^{T-1}R_T$ је непристрасна оцена $v_\pi(S_t)$. TD мета $R_{t+1}+\gamma V(S_{t+1})$ јесте пристрасна, јер користи вредност $V(S_{t+1})$, која је наша процена и у општем случају не мора бити тачна.\\
+
+\noindent Са друге стране, TD мета има мању дисперзију од поврата. Она зависи само од једне случајне променљиве, $R_{t+1}$. $V(S_{t+1})$ је константа па има дисперзију 0. Дисперзија поврата је збир дисперзија великог броја променљивих.\\
+
+\noindent Због дисперзије ће алгоритам осциловати око правог решења. Величина тих осцилација зависиће и од величине корака $\alpha$.\\
+
+\noindent Такође, зато што врши бутстрепинг, TD је много осетљивији на почетне вредности.\\
+
+\noindent У пракси се показује да су TD методе углавном ефикасније.\\
+
+\begin{figure}[h]
+	\centering
+    \includegraphics[width=0.8\linewidth]{slika5_1d.png}
+\end{figure}
+
+\noindent Пример насумичног хода. Сива стања су терминална. На графику је приказана зависност просечне грешке по свим стањима од броја епизода које је агент прошао. Дати су графици за различите $\alpha$. Видимо да TD брже тежи решењу и има мању минималну грешку. То значи да је дисперзија MC већи извор грешке него пристрасност.
+
+\newpage
+
+\begin{figure}[h]
+	\centering
+    	\includegraphics[width=0.65\linewidth]{slika5_2d.png}
+\end{figure}
+
+\subsubsection{Разлике у случају ограниченог искуства}
+
+\noindent Размотримо прво један пример. Постоје два стања, $A$ и $B$, немамо попуст, дато нам је 8 епизода:
+$$A,0,B,0$$
+$$B,1$$
+$$B,1$$
+$$B,1$$
+$$B,1$$
+$$B,1$$
+$$B,1$$
+$$B,0$$
+Које су вредности $A$ и $B$?\\
+
+
+\noindent MC конвергира решењу које минимизује средње квадратно одступање решења од података.
+\begin{equation}
+    \sum_{k=1}^K \sum_{t=1}^{T_k}(G_t^k-V(s_t^k))
+\end{equation}
+
+$k$ је број епизоде, а $t$ корак у епизоди. У $AB$ примеру, $V(A)=0$.\\
+
+\noindent TD конвергира решењу највероватнијег Марковљевог модела, тј. $\left<\mathcal{S,A,\overline{P},\overline{R}},\gamma\right>$ које најбоље одговара виђеним подацима:
+\begin{align}
+  \mathcal{\overline{P}}_{s,s'}^a&=\frac{1}{N(s,a)}\sum_{k=1}^K \sum_{t=1}^{T_k}I(s_t^k,a_t^k,s_{t+1}^k=s,a,s') \\
+  \mathcal{\overline{R}}_{s,s'}^a&=\frac{1}{N(s,a)}\sum_{k=1}^K \sum_{t=1}^{T_k}I(s_t^k,a_t^k=s,a)r_t^k
+\end{align}
+$I$ je индикатор догађаја. Има вредност 1 ако је једнакост тачна, а 0 у супротном.\\
+У $AB$ примеру, $V(A)=0.75$.\\
+\begin{figure}[h]
+	\centering
+  	\includegraphics[width=0.3\linewidth]{slika5_2.png}
+  	\caption{Највероватнији Марковљев модел.}
+\end{figure}
+
+\noindentОва разлика је последица чињенице да TD, за разлику од MC-a, искоришћава Марковљево својство. Подсетимо се Марковљевог својства: будућност зависи само од тренутног стања, што значи да очекивани поврат стања не зависи од начина на који смо у њега дошли. Захваљујући томе TD је углавном ефикаснији у Марковљевим окружењима.\\
+
+\subsection{TD($\lambda$) учење}
+
+\subsubsection{Поврат у n корака}
+
+\noindent Зашто не бисмо дозволили да TD мета узме у обзир $n$ корака пре него што бутстрепује? На овај начин уводимо генералнију верзију TD учења, TD($\lambda$), која нам даје алгоритме између TD и MC метода.\\
+
+\begin{figure}[h]
+	\centering
+  	\includegraphics[width=0.5\linewidth]{slika5_3.png}
+  	\caption{Поврати у n корака.}
+\end{figure}
+
+
+\noindent Размотримо следеће примере поврата у n корака, за n=1,2,$\mathcal{1}$:
+\begin{alignat}{3}
+	n&=1\ \ \   (TD)\ \ \   &&G_t^{(1)}= R_{t+1}+ \gamma V(S_{t+1})\\
+    n&=2      &&G_t^{(2)}= R_{t+1}+ \gamma R_{t+2}+ \gamma^2V(S_{t+2})\\
+     &\vdots    &&\vdots\\
+     n&=\mathcal{1}\ (MC)  &&G_t^{(\mathcal{1})}= R_{t+1}+ \gamma R_{t+2}+...+ \gamma^{T-1}R_T
+\end{alignat}
+
+\noindent Дефинишимо поврат у n корака:
+\begin{equation}
+    G_t^{(n)}= R_{t+1}+ \gamma R_{t+2}+...+ \gamma^{n-1}R_{t+n}+ \gamma^nV(S_{t+n})
+ \end{equation}
+Сада уместо TD мете користимо нови поврат:
+\begin{equation}
+    V(S_t)=V(S_t) + \alpha(G_t^{(n)}-V(S_t))
+ \end{equation}
+
+\noindent Проблем са повратом у n корака је избор одговарајућег n. Идеално n ће се значајно мењати од проблема до проблема. Циљ машинског учења је да нађе алгоритме који могу без промене да раде на што већем броју проблема. Желимо да избегнемо потребу за одређивањем најбољег n.\\
+
+
+
+\begin{minipage}{0.45\linewidth}
+	Пример већег насумичног хода. На графику се види зависност просечне грешке по свим стањима од различитих вредности $\alpha$ при коришћењу поврата у $n$ корака. Различите криве се односе на различите вредности $n$.
+\end{minipage}
+\hfill
+\begin{minipage}{0.45\linewidth}
+	\includegraphics[width=\linewidth]{slika5_6d.png}
+\end{minipage}
+
+\subsubsection{Просек за различите n}
+Најједноставнија идеја је узети просечну вредност поврата у n корака за више различитих n. Поставља се питање да ли можемо на ефикасан начин искомбиновати поврате за све могуће вредности n?
+
+\subsubsection{$\lambda$ поврат}
+\noindent Идеја $\lambda$ поврата је да геометријски отежинимо све поврате. Сума тежина мора бити једнака 1. Ово постижемо увођењем параметра $\lambda\in[0,1]$. Тежина n-тог поврата једнака је $(1-\lambda)\lambda^{n-1}$:
+\begin{equation}
+    G_t^{\lambda} = (1-\lambda)\sum_{n=1}^{\mathcal{1}}\lambda^{n-1}G_t^{(n)} 
+\end{equation}
+
+\noindent Сада TD($\lambda$) узима облик:
+\begin{equation}
+    V(S_t)=V(S_t)+\alpha(G_t^\lambda-V(S_t))
+ \end{equation}
+
+\noindentСпецијални случајеви: за $\lambda$ = 0 добијамо TD, а за $\lambda$ = 1 MC учење.\\
+
+\begin{figure}[h]
+	\centering
+    \begin{subfigure}{0.35\linewidth}
+   	 \includegraphics[width=\linewidth]{slika5_4.png}
+    \end{subfigure}
+    \centering
+  	\begin{subfigure}{0.55\linewidth}
+   	 \includegraphics[width=\linewidth]{slika5_5.png}
+    \end{subfigure}
+  	\caption{$\lambda$ поврати.}
+\end{figure}
+
+
+\subsubsection{TD($\lambda$) са погледом унапред}
+У досадашњем приступу TD($\lambda$) алгоритам је гледао "напред у будућност" да би израчунао
+$\lambda$ поврат. Награде које су нам потребне за ажурирање неког стања добијамо тек када то стање напустимо. У пракси ово можемо извести тако што сачекамо да се епизода заврши и потом посећујемо стања уназад. Код Монте Карло метода смо већ видели да није повољно чекати завршетак епизоде. Ово можемо заобићи памћењем такозваних \textbf{трагова одговорности}.\\
+
+\begin{figure}[h]
+	\centering
+  	\includegraphics[width=0.7\linewidth]{slika5_6.png}
+  	\caption{Поглед унапред.}
+\end{figure}
+
+\subsubsection{Трагови одговорности}
+
+\noindent Потребан нам је начин да после сваког корака агента у окружењу ажурирамо претходна стања, тако да укупно ажурирање сваког стања остане исто као при погледу унапред.
+
+\begin{figure}[h]
+	\centering
+  	\includegraphics[width=0.6\linewidth]{slika5_7.png}
+  	\caption{Шта је узрок електрошока, звоно или лампица?}
+\end{figure}
+
+\noindent Постоје два основна начина на које можемо рачунати колико је сваки догађај допринео исходу: на основу броја појављивања догађаја (фреквенције) и на основу тога колико се скоро догађај десио.\\
+
+Трагови одговорности комбинују ове две идеје:
+\begin{equation}
+    E_0(s)=0
+ \end{equation}
+\begin{equation}
+    E_t(s)=\gamma\lambda E_{t-1}(s)+I(S_t=s)
+ \end{equation}
+
+Где је $E_t(s)$ траг одговорности стања $s$ у тренутку $t$. Сваки пут када наиђемо на неко стање $s$, његов траг одговорности ће се увећати за $1$ ($I$ је индикатор). Трагови одговорности свих стања у којима нисмо били у тренутку t експоненцијално опадају брзином $\gamma \lambda$. Множимо са $\gamma \lambda$ јер ће на тај начин укупно ажурирање бити исто као при погледу унапред са та два параметра.
+\begin{figure}[h]
+	\centering
+  	\includegraphics[width=0.6\linewidth]{slika5_8.png}
+  	\caption{Трагови одговорности}
+\end{figure}
+
+\subsubsection{TD($\lambda$) са погледом уназад}
+
+\noindent За свако стање чувамо траг одговорности и вредносне функције ажурирамо пропорционало TD грешци $\delta_t$ и трагу одговорности $E_t(s)$:
+\begin{align}
+	\delta_t&=R_{t+1} + \gamma V(S_{t+1})-V(S_t)\\
+    V(s)&=V(s)+\alpha\delta_tE_t(s)
+\end{align}
+
+\begin{figure}[h]
+	\centering
+  	\includegraphics[width=0.8\linewidth]{slika5_9.png}
+  	\caption{Поглед уназад.}
+\end{figure}
+
+\noindent У случају $\lambda$=0, ажурирамо само тренутно стање:
+\begin{align}
+	E_t(s)&=I(S_t=s)\\
+    V(s)&=V(s)+\alpha\delta_tE_t(s)
+\end{align}
+Што је еквивалентно са TD(0). Слично, за $\lambda$=1, алгоритам је еквивалентан MC.
+
+\begin{teorema}
+\normalfont
+Сума свих промена вредности неког стања је једнака за TD($\lambda$) са погледом у напред и погледом у назад:
+\begin{equation}
+    \sum_{t=1}^T\alpha\delta_tE_t(s) = \sum_{t=1}^T\alpha(G_t^\lambda-V(S_t))I(S_t=s)
+ \end{equation}
+
+\end{teorema}
+\begin{dokaz}
+\normalfont
+	Претпоставимо да је у току епизоде стање $S_t$ посећено једном у тренутку $t$. Тада важи:
+\begin{alignat}{2}
+	G_t^\lambda-V(S_t) &= \quad -V(S_t) \quad &&+ \quad (1-\lambda)\lambda^0(R_{t+1}+\gamma V(S_{t+1}))\\
+    &&& + \quad (1-\lambda)\lambda^0(R_{t+1}+\gamma R_{t+2} + \gamma^2 V(S_{t+2}))\\
+    &&& + \quad (1-\lambda)\lambda^0(R_{t+1}+\gamma R_{t+2} + \gamma^2 R_{t+2}+ \gamma^3 V(S_{t+3}))\\
+    &&& + \quad ...\\
+    &= \quad -V(S_t) \quad &&+ \quad (\gamma\lambda)^0(R_{t+1}+\gamma V(S_{t+1})-\gamma\lambda V(S_{t+1}))\\
+    &&& + \quad (\gamma\lambda)^1(R_{t+2}+\gamma V(S_{t+2})-\gamma\lambda V(S_{t+2}))\\
+    &&& + \quad (\gamma\lambda)^2(R_{t+3}+\gamma V(S_{t+3})-\gamma\lambda V(S_{t+3}))\\
+    &&& + \quad ...\\
+    &= && \ \quad (\gamma\lambda)^0(R_{t+1}+\gamma V(S_{t+1})- V(S_{t}))\\
+    &&& + \quad (\gamma\lambda)^1(R_{t+2}+\gamma V(S_{t+2})- V(S_{t+1}))\\
+    &&& + \quad (\gamma\lambda)^2(R_{t+3}+\gamma V(S_{t+3})- V(S_{t+2}))\\
+    &&& + \quad ...\\
+    &=&& \delta_t+\gamma\lambda\delta_{t+1}+(\gamma\lambda)^2\delta_{t+2}+...
+\end{alignat}
+Пошто је стање посећено само једном:
+\begin{equation}
+    \sum_{t=1}^T\alpha\delta_t E_t(s) = \alpha \sum_{t=k}^T(\gamma\lambda)^{t-k}\delta_t=\alpha(G_k^\lambda-V(S_k))
+ \end{equation}
+
+У случају да је стање посећено више пута, довољно је да одвојено посматрамо посете. Како смо већ доказали да је за сваку посету сума промена уназад једнака промени унапред, исто мора важити и за њихове суме. $\qedsymbol$\\
+\end{dokaz}
+
+\noindent Поглед унапред и уназад се значајно разликују по питању временске сложености. При погледу унапред, довољно је да после завршене епизоде у обрнутом редоследу једном прођемо стања на агентовој трајекторији, јер ако је $\lambda$-поврат стања посећеног у тренутку $t$ једнак:
+\begin{align}
+	G_{t-1}^\lambda&=(1-\lambda)\sum_{n=1}^\mathcal{1}\lambda^{n-1}G_{t-1}^{(n)}\\
+    	   &=(1-\lambda)\sum_{n=1}^\mathcal{1}\lambda^{n-1}(R_{t}+ \gamma R_{t+1}+...)\\
+               &=(1-\lambda)R_t + \lambda(1-\lambda)\sum_{n=1}^\mathcal{1}\lambda^{n-1}(R_{t+1}+ \gamma R_{t+2}+...)\\
+               &=(1-\lambda)R_t + \lambda G_{t}^\lambda
+\end{align}
+Сложеност погледа унапред је $O(T)$, где је $T$ дужина епизоде. При погледу уназад при сваком кораку ажурирамо свако стање, па је сложеност $O(nT)$, за $n$ стања.\\
+Видимо да поглед уназад има доста већу сложеност, па је боље користити поглед унапред уколико је практично сачекати крај епизоде. \\
+
+\begin{minipage}{0.45\linewidth}
+	Пример већег насумичног хода. На графику се види зависност просечне грешке по свим стањима од различитих вредности $\alpha$ при коришћењу $\lambda$-поврата. Различите криве се односе на различите вредности $\lambda$.
+\end{minipage}
+\hfill
+\begin{minipage}{0.45\linewidth}
+	\includegraphics[width=\linewidth]{slika5_7d.png}
+\end{minipage}
+
+\begin{figure}[h]
+	\centering
+    \begin{subfigure}{0.45\linewidth}
+   	 \includegraphics[width=\linewidth]{slika5_3d.png}
+         \caption{Монте Карло}
+    \end{subfigure}
+    \begin{subfigure}{0.45\linewidth}
+   	 \includegraphics[width=\linewidth]{slika5_4d.png}
+         \caption{Temporal difference}
+    \end{subfigure}
+    \begin{subfigure}{0.45\linewidth}
+   	 \includegraphics[width=\linewidth]{slika5_5d.png}
+         \caption{Динамичко програмирање}
+    \end{subfigure}
+
+    \caption{Преглед различитих начина ажурирања вредносних функција у обрађеним алгоритмима}
+
+\end{figure}
+
+
+\newpage
+
+\section{Контрола без модела}
+
+У претходна два поглавља видели смо како итеративном применом оцене и побољшања полисе долазимо до оптималне вредносне функције у случају MDP-а, и како да оценимо полису у случају да модел није познат. Спајањем ових идеја долазимо до алгоритама за контролу без модела.\\
+ 
+\begin{definicija}
+\normalfont
+Кажемо да алгоритам учи \textbf{на полиси} када унапређује полису $\pi$ на основу искуства прикупљеног пратећи ту полису.
+\end{definicija}
+
+\begin{definicija}
+\normalfont
+Кажемо да алгоритам учи \textbf{ван полисе} када унапређује полису $\pi$ на основу искуства прикупљеног пратећи неку другу полису $\mu$.
+\end{definicija}
+
+\noindent У случају учења на полиси агент мора да интереагује са окружењем и учи само из својих трајекторија. Учење ван полисе му омогућава да учи гледајући неког другог агента. Ово доноси низ предности. Може учити гледајући човека. Такође, када су интеракције са окружењем јако скупе, можемо тренирати више различитих агената по цени једног (на примеру самовозећих аутомобила, велика је разлика да ли ћемо их слупати 2 или 20). Међутим, оно често повећава дисперзију. У овом поглављу ћемо обрадити оба типа алгоритама.
+
+\noindent Подсетимо се да се итерација полисе састоји из два дела: оцене и побољшања полисе. И даље користимо ова два корака, али за њих уводимо нове алгоритме.
+
+\subsection{Монте Карло контрола на полиси}
+
+\noindent Да ли је комбинација Монте Карло оцене и похлепног побољшања полисе довољна за налазак оптималне полисе? Испоставља се да није. Постоје два проблема са овим приступом.\\
+Први је то што похлепно побољшање полисе у односу на вредносну функцију $V(s)$ захтева познавање Марковљевог процеса одлучивања:
+\begin{eqnarray}
+   	 \pi'(s)= \underset{{a\in\mathcal{A}}}{\mathrm{argmax}}(\mathcal{R}_s^a+\mathcal{P}_{ss'}^aV(s'))
+\end{eqnarray}
+    Решење: учимо вредносну функцију акција $Q(s,a)$:
+\begin{equation}
+    \pi'(s)=\underset{{a\in\mathcal{A}}}{\mathrm{argmax}}Q(s,a)
+\end{equation}
+   
+
+\noindent Подсетимо се да учење $Q(s,a)$ повећава сложеност, али је овде неизбежно. 
+
+\begin{figure}[h]
+	\centering
+  	\includegraphics[width=0.5\linewidth]{slika6_0.png}
+    \caption{}
+\end{figure}
+
+\noindent Други проблем је то што радимо похлепна побољшања полисе. Увек похлепно бирање акција доводи до проблема истраживања. Наиме, како сада не знамо MDP, при учењу не можемо у обзир узети све могуће транзиције. Лако се можемо заглавити на неком лошем локалном максимуму и оставити већи део простора неистраженим. \\
+
+\begin{figure}[h]
+	\centering
+  	\includegraphics[width=0.5\linewidth]{slika6_1.png}
+    \caption{Испред вас су двоја врата. Бирате једна од њих и добијате награду, која је стохастична. Пробали сте прва врата и добили награду $0$. Потом друга, и овај пут добијате $+1$. Пратећи похлепну полису поново отварате друга врата и добијате награду $+3$. Процењена вредност бирања других врата је $+2$, а првих $0$. Ако друга увек дају награде $+1$ и $+3$, изнова и изнова ћемо њих отварати, иако смо из првих видели само једну награду. }
+\end{figure}
+
+
+\subsubsection{$\epsilon$-похлепно побољшање полисе}
+ Ово је вероватно најједноставнији начин да уведемо истраживање. У пракси се испоставља да тешко можемо боље од њега. При сваком доношењу одлуке, са вероватноћом $\epsilon$ бирамо насумичну акцију:
+    \begin{equation}
+    \pi'(s)=\begin{cases}
+    	\epsilon/m+1-\epsilon \quad  \text{за}\  a*= \underset{{a\in\mathcal{A}}}{\mathrm{argmax}}\,Q(s,a)\\
+        \epsilon \quad \text{у супротном}\\
+    \end{cases}
+    \end{equation}
+
+\noindent Докажимо да $\epsilon$-похлепно побољшање полису заиста чини бољом.
+
+\begin{teorema}
+\normalfont
+	За сваку $\epsilon$-похлепну полису $\pi$, $\epsilon$-похлепна полиса $\pi'$ по $q_\pi$ има већу или једнаку вредносну функцију, $v_{\pi'}(s)\geq v_\pi(s)$.
+\end{teorema}
+\begin{dokaz}
+Прво ћемо доказати да ако један корак користимо нову полису, а потом пратимо стару, повећавамо вредносну функцију:
+\begin{align}
+	q_\pi(s,\pi'(s)) &= \sum_{a\in\mathcal{A}}\pi'(a|s)q_\pi(s,a)\\
+    &=\epsilon/m\sum_{a\in\mathcal{A}}q_\pi(s,a) + (1-\epsilon)\max_{a\in\mathcal{A}}q_\pi(s,a)\\
+    &\geq \epsilon/m\sum_{a\in\mathcal{A}}q_\pi(s,a) + (1-\epsilon)\sum_{a\in\mathcal{A}}\frac{\pi(a|s)-\epsilon/m}{1-\epsilon}q_\pi(s,a)\\
+    &=\sum_{a\in\mathcal{A}}\pi(a|s)q_\pi(s,a)=v_\pi(s)
+\end{align}
+Сада слично теореми о побољшању полисе коју смо доказали у поглављу о динамичком програмирању, неједнакост за један корак можемо применити на све кораке дуж путање, одакле следи $v_{\pi'}(s)\geq v_\pi(s). \qedsymbol$
+\end{dokaz}
+
+
+\subsubsection{Монте Карло итерација полисе}
+
+\begin{minipage}{0.45\textwidth}
+
+Алгоритам сада узима следећи облик:
+\begin{itemize}
+	\item MC oцена полисе, $Q=q_\pi$
+    \item $\epsilon$-похлепно побољшање\\
+\end{itemize}
+\end{minipage}%
+\hfill
+\begin{minipage}{0.45\textwidth}
+	\includegraphics[width=0.9\linewidth]{slika6_2.png}
+\end{minipage}%
+
+
+\begin{minipage}{0.45\textwidth}
+\noindent Већ смо видели да је у пракси често неефикасно чекати да оцена полисе исконвергира правој вредности. Можемо одмах искористити стечено знање $\epsilon$-похлепним побољшањем после сваке епизоде. \\
+\end{minipage}%
+\hfill
+\begin{minipage}{0.45\textwidth}
+	\includegraphics[width=0.9\linewidth]{slika6_3.png}
+\end{minipage}%
+
+\noindent Да ли $\epsilon$-похлепни алгоритми заиста налазе оптималну вредносну функцију? Овде постоји баланс између две ствари. Неопходно је да довољно истражују, да им не би промакла нека информација, али асимптотски морају да теже похлепној полиси, јер је свака оптимална полиса похлепна.
+
+\begin{definicija}
+\normalfont
+ Учење је \textbf{похлепно у границама са бесконачним истраживањем (GLIE)} акко:
+ \begin{itemize}
+ 	\item Све парове стање-акција виђамо бесконачно много пута:
+    \begin{equation}
+    	\lim_{k\rightarrow\mathcal{1}}N_k(s,a)=\mathcal{1}
+    \end{equation}
+    \item Полиса конвергира похлепној полиси:
+    \begin{equation}
+  	  \lim_{k\rightarrow\mathcal{1}}\pi_k(a|s)=I(a=\underset{a'\in\mathcal{A}}{\mathrm{argmax}}Q_k(s,a'))
+    \end{equation}
+ \end{itemize}
+\end{definicija}
+
+\noindent Идеја је да $\epsilon$ поступно смањујемо. На пример, $\epsilon$-похлепно учење је GLIE за $\epsilon_k=1/k$.\\
+
+\begin{teorema}
+\normalfont
+	GLIE Монте Карло контрола конвергира оптималној вредносној функцији акција, $Q(s,a)\rightarrow q_*(s,a)$
+\end{teorema}
+\noindent Дакле, GLIE својство гарантује да алгоритам истражује баш онолико колико је потребно.\\
+
+
+\begin{figure}[h]
+	\centering
+  	\includegraphics[width=0.9\linewidth]{slika6_4.png}
+    \caption{Монте Карло контрола на примеру поједностављеног Блек Џека из прошлог поглавља. }
+\end{figure}
+
+
+\subsection{Temportal Difference контрола на полиси}
+Већ смо видели више предности TD учења у односу на MC: мања дисперзија, учење из незавршених и непотпуних епизода, већа брзина конвергенције и мања минимална грешка. Природно се јавља идеја да користимо TD уместо MC оцене полисе.
+
+\newpage 
+
+\subsubsection{SARSA}
+Дошли смо до алгоритма по имену SARSA (State, Action, Reward, next State, next Action). Она је облик TD оцене, када уместо $V(s)$ користимо $Q(s,a)$. Ажурирамо вредност стања и акције за неку полису помоћу награде, наредног стања и наредне акције изабране истом том полисом:
+\begin{equation}
+	(s,a) = Q(s,a)+\alpha(R+\gamma Q(s',a')-Q(s,a))
+\end{equation}
+
+\begin{minipage}{0.7\textwidth}
+Сада алгоритам контроле \textbf{у сваком кораку} врши:
+\begin{itemize}
+	\item SARSA оцену полисе, $Q\approx q_\pi$
+    \item $\epsilon$-похлепно побољшање полисе
+\end{itemize}
+\end{minipage}
+\hfill
+\begin{minipage}{0.2\textwidth}
+	\includegraphics[width=0.7\linewidth]{slika6_5.png}
+\end{minipage}
+
+\noindent Псеудокод алгоритма:
+\begin{codebox}
+	\Procname{$\proc{SARSA}$}
+	\li $\proc{initialise } Q(s,a),\forall s\in\mathcal{S},a\in\mathcal{A}(s), \proc{ arbitrarily, and } Q(\proc{terminal-state},\cdot)=0$
+    \li $\proc{repeat (for each episode):}$
+    \li \Do 
+    	$\proc{initialise } S$
+    \li $\proc{choose } A \proc{ from } S \proc{ using policy derived from } Q \proc{(e.g.,}\epsilon\proc{-greedy)}$
+    \li $\proc{repeat (for each step of episode):}$
+    \li \Do 
+    	$\proc{take action } A \proc{, observe } R,\ S'$
+    \li $\proc{choose } A' \proc{ from } S' \proc{ using policy derived from } Q \proc{(e.g.,}\epsilon\proc{-greedy)}$
+    \li $Q(S,A) \leftarrow Q(S,A) + \alpha[R+\gamma Q(S',A')-Q(S,A)]$
+    \li $S \leftarrow S';\ A\leftarrow A'$
+    	\End 
+    \li $\proc{until S is terminal}$
+    	\End 
+\end{codebox}
+
+\noindent Да ли SARSA увек конвергира оптималној вредносној функцији? Овог пута нам је потребно још једно додатно својство.
+
+\begin{teorema}
+\normalfont
+	SARSA конвергира оптималној вредносној функцији акција, $Q(s,a)\rightarrow q_*(s,a)$, под следећим условима:
+    \begin{itemize}
+    	\item алгоритмом добијамо GLIE низ полиса
+        \item и Робин-Монро низ величина корака $\alpha_t$:
+       	\begin{align}
+       		\sum_{t=1}^{\mathcal{1}}\alpha_t&=\mathcal{1}\\
+        	\sum_{t=1}^{\mathcal{1}}\alpha_t^2&<\mathcal{1}
+       	\end{align}
+        Први услов нам говори да су кораци довољно велики, па ће почетна вредносна функција успети да достигне праву, а други да се кораци временом смањују, захваљујући чему ће вредносна функција исконвергирати правој.\\
+    \end{itemize}
+\end{teorema}
+
+\begin{figure}[h]
+	\centering
+    \begin{subfigure}{0.40\linewidth}
+    	\includegraphics[width=\linewidth]{slika6_6.png}
+    \end{subfigure}
+  	\begin{subfigure}{0.55\linewidth}
+    	\includegraphics[width=\linewidth]{slika6_7.png}
+    \end{subfigure}
+    \caption{Ветровити мрежни свет \cite{DS5}. У сваком кораку агент може прећи на неко од суседних поља (горе, доле, лево или десно), а на одређеним местима дува ветар који га гура на горе. Циљ је доћи до поља G. На другој слици видимо оптималну полису добијену SARSA-ом. Генерално, за овај алгоритам карактеристично је дуго време до првог проналаска циља. Након тога, бутстрепинг омогућава да агент учи све брже и брже, па добијена крива има такав изглед.}
+\end{figure}
+
+\noindent Поново можемо уопштити TD учење на начин који смо то урадили у претходном поглављу.
+
+\subsubsection{SARSA у n-корака}
+Дефинишимо Q-поврат у n корака:
+	\begin{equation}
+		q_t^{(n)}=R_{t+1}+\gamma R_{t+2}+...+\gamma^{n-1}R_{t+n}+\gamma^nQ(S_{t+n},A_{t+n})
+	\end{equation} 
+Сада SARSA ажурира $Q(s,a)$ у смеру овог поврата:
+	\begin{equation}
+		Q(S_t,A_t)=Q(S_t,A_t)+\alpha(q_t^{(n)}-Q(S_t,A_t))
+	\end{equation}
+
+\subsubsection{SARSA($\lambda$) са погледом унапред}
+Као што смо већ видели, $\lambda$ поврат комбинује поврате у n корака за све n:
+\begin{equation}
+	q_t^\lambda=(1-\lambda)\sum_{n=1}^{\mathcal{1}}\lambda^{n-1}q_t^{(n)}
+\end{equation}
+
+SARSA($\lambda$) ажурирања:
+ \begin{equation}
+ 	Q(S_t,A_t)=Q(S_t,A_t)+\alpha(q_t^\lambda-Q(S_t,A_t))
+ \end{equation}
+ 
+\noindent Избором $\lambda$ добијамо могућност балансирања између TD и MC, тј. између пристрасности и дисперзије.
+
+\subsubsection{SARSA($\lambda$) са погледом уназад}
+Користимо трагове одговорности:
+\begin{align}
+	E_0(s,a)&=0\\
+    E_t(s,a)&=\gamma\lambda E_{t-1}(s,a)+I(S_t=s,A_t=a)
+\end{align}
+Ажурирања вршимо пропорционало TD грешци $\delta_t$ и трагу одговорности:
+\begin{align}
+	&\delta_t=R_{t+1} + \gamma Q(S_{t+1},A_{t+1})-Q(S_t,A_t)\\
+    &Q(s,a)=Q(s,a)+\alpha\delta_tE_t(s,a)
+\end{align}\\
+
+\noindent Псеудокод SARSA($\lambda$) алгоритмa:
+
+\begin{codebox}
+	\Procname{$\proc{SARSA}(\lambda)$}
+	\li $\proc{initialise } Q(s,a),\forall s\in\mathcal{S},\ a\in\mathcal{A}(s), \proc{ arbitrarily, and } Q(\proc{terminal-state},\cdot)=0$
+    \li $\proc{repeat (for each episode):}$
+    \li \Do 
+    	$E(s,a)=0, \proc{ for all } s\in\mathcal{S},\ a\in\mathcal{A}(s)$ 
+    \li $\proc{initialise } S,\ A$
+    \li $\proc{repeat (for each step of episode):}$
+    \li \Do 
+    	$\proc{take action } A \proc{, observe } R,\ S'$
+    \li $\proc{choose } A' \proc{ from } S' \proc{ using policy derived from } Q \proc{(e.g.,}\epsilon\proc{-greedy)}$
+    \li $\delta \leftarrow R + \gamma Q(S',A')-Q(S,A)$
+    \li $E(S,A) \leftarrow E(S,A)+1$
+    \li $\proc{for all } s\in\mathcal{S},\ a\in\mathcal{A}(s):$
+    \li \Do 
+    	$Q(s,a) \leftarrow Q(s,a) + \alpha\delta E(s,a)$
+    \li $E(s,a) \leftarrow \gamma\lambda E(s,a)$
+    	\End 
+    \li $S \leftarrow S';\ A\leftarrow A'$
+    	\End 
+    \li $\proc{until } S \proc{ is terminal}$
+    	\End 
+\end{codebox}
+
+\begin{figure}[h]
+	\centering
+  	\includegraphics[width=0.8\linewidth]{slika6_8.png}
+    \caption{Пример разлике између обичног и $\lambda$ SARSA алгоритма. На првој слици је приказана агентова трајекторија. Величине стрелица представљају величину вредносне функције одговарајућих акција.}
+\end{figure}
+
+\subsection{Учење ван полисе}
+Видели смо да истраживање представља велики проблем када немамо модел. Учење ван полисе нам омогућава да оценимо \textbf{циљну полису} $\pi(a|s)$ пратећи \textbf{полису понашања} $\mu(a|s)$. На овај начин можемо наћи оптималну полису док пратимо неку истраживачку полису. Такође, можемо поново искористити старо искуство, што ће бити од велике важности у наредном поглављу.\\
+
+\noindent Погледајмо сада два механизма којима ово постижемо.
+
+\subsubsection{MC и TD учење ван полисе коришћењем Importance sampling-а}
+Генерална идеја importance sampling-а је да врши процену расподеле $P$ на основу неке друге расподеле $Q$, тако што узимамо узорке из $Q$, и множимо их са количником вероватноће да тај узорак добијемо из расподеле $P$ и $Q$:
+\begin{align}
+	\mathbb{E}_{X \sim P}[f(X)] &=\sum P(X)f(X)\\
+    	    &=\sum Q(X)\frac{P(X)}{Q(X)}f(X)\\
+                            &=\mathbb{E}_{X\sim Q}\left[\frac{P(X)}{Q(X)}f(X)\right]
+\end{align}
+Importance sampling је у суштини користан када је лакше узимати узорке из Q него P.\\
+
+\noindent Интегришемо га у MC тако што отежинимо поврат:
+\begin{equation}
+	G_t^{\pi/\mu} = \frac{\pi(A_t|S_t)}{\mu(A_t|S_t)}\frac{\pi(A_{t+1}|S_{t+1})}{\mu(A_{t+1}|S_{t+1})}... \frac{\pi(A_T|S_T)}{\mu(A_T|S_T)} G_t 
+\end{equation}
+\begin{equation}
+	V(S_t)=V(S_t)+\alpha(G_t^{\pi/\mu}-V(S_t))
+\end{equation}
+
+\noindent Иако на први поглед делује примамљиво, MC ван полисе доноси низ проблема који га чине практично неупотребљивим. Постоји могућност дељења са нулом, ако је $\mu(A_t|S_t)=0$ када $\pi(A_t|S_t)$ није, што је врло могућа појава. Такође, како стања и акције добијамо праћењем полисе $\mu$, именилац разломка ће углавном бити доста већи него бројилац, па ће поврат постати безначајно мали. Уз све то, ово значајно повећава дисперзију.\\
+
+\noindent Када учимо ван полисе, неопходно је да користимо TD:
+
+\begin{equation}
+	V(S_t)=V(S_t)+\alpha\left(\frac{\pi(A_t|S_t)}{\mu(A_t|S_t)}(R_{t+1}+\gamma V(S_{t+1}))-V(S_t)\right)
+\end{equation}
+
+\noindent У пракси, ни TD са importance sampling-ом не даје претерано добре резултате, па користимо друге методе.
+
+\subsubsection{Q-учење у ширем смислу}
+Ово је најефикаснија метода за учење ван полисе. Идеја је врло једноставна. Када смо у неком стању $S$, наредну акцију $A_t$ бирамо помоћу полисе понашања, чиме долазимо у ново стање $S_{t+1}$. Након тога \textbf{разматрамо} алтернативну акцију коју би изабрали у новом стању пратећи циљну полису. Потом $Q(S_t,A_t)$ ажурирамо у смеру алтернативне акције:
+\begin{equation}
+	Q(S_t,A_t)=Q(S_t,A_t)+\alpha(R_{t+1}+\gamma Q(S_{t+1},A')-Q(S_t,A_t))
+\end{equation}
+
+\noindent Ово можемо схватити као уопштење TD(0) учења. При TD(0) учењу, циљна и полиса понашања су исте.
+Елеганција Q-учења је у томе што циљна полиса не узима у обзир никакве специфичности полисе понашања, већ само виђене награде, које немају никакву пристрасност. Овде нам $\mu$ служи да прикупи што више информативних транзиција.\\ На пример, могли би да пратимо насумичну полису, а да учимо оптималну, и да тиме на неки начин симулирамо исцрпну претрагу какву смо имали у динамичком програмирању.
+
+\subsubsection{Q-учење у ужем смислу}
+Када се спомене Q-учење, углавном се мисли на овај специјални случај. Сада нам је циљна полиса похлепна у односу на $Q(s,a)$:
+\begin{equation}
+	\pi(S_{t+1})=\underset{a'}{\mathrm{argmax}}Q(S_{t+1},a')
+\end{equation}
+
+\noindent А полиса понашања $\epsilon$-похлепна у односу на $Q(s,a)$. Обе полисе се побољшавају.\\
+Овим добијамо поједностављену мету:
+\begin{align}
+	&R_{t+1}+\gamma Q(S_{t+1},A')\\
+  =&R_{t+1}+\gamma Q(S_{t+1},\underset{a'}{\mathrm{argmax}}Q(S_{t+1},a'))\\
+  =&R_{t+1}+\max_{a'}\gamma Q(S_{t+1},a')
+\end{align}
+па ажурирања узимају облик:
+\begin{equation}
+	Q(s,a)=Q(s,a)+\alpha\left(R+\gamma\max_{a'}Q(S',a')-Q(S,A)\right)
+\end{equation}
+
+\noindent Зашто пратимо $\epsilon$-похлепну полису? Зашто не насумичну? $\epsilon$-похлепна полисе ја углавном веома ефикасна, јер довољно истражује, а не расплињује се превише на све делове порстора, чиме омогућава брже учење вредносних функција у битним тачкама.\\
+
+\noindent Може се доказати да $Q$-учење заиста конвергира.
+
+\begin{teorema}
+\normalfont
+Q-учење конвергира оптималној вредносној функцији акција, $Q(s,a)\rightarrow q_*(s,a)$\\
+\end{teorema}
+
+\noindent Направимо контраст између ДП и TD метода и Белманових једначина које имплицитно користе.
+
+\begin{center}
+\begin{tabular}{ |m{0.3\linewidth}|m{0.25\linewidth}|m{0.25\linewidth}| }
+	\hline
+ 	Белманова једначина & ДП & TD\\
+    \hline\hline
+    Белманова једначина очекивања за $v_\pi(s)$ & Итеративна оцена полисе & TD учење\\
+    \hline
+    Белманова једначина очекивања за $q_\pi(s,a)$ & Q-итерација полисе & SARSA\\
+    \hline
+    Белманова једначина оптималности за $q_*(s,a)$ & Q-итерација вредносне функције & Q-учењe\\
+    \hline
+\end{tabular}
+\end{center}
+
+\begin{minipage}{0.45\textwidth}
+	Пример разлике између учења на и ван полисе. Претпоставимо да $\epsilon$ има фиксну вредност. $\epsilon$-похлепна полиса има не нулту вероватноћу да насумично скрене ка провалији. SARSA учи на полиси, стога урачунава ризик од слетања у провалију, па иде заобилазним путем. Са друге стране, Q-учењем налази најкраћи пут до решења. (Када би GLIE својство било задовољено и SARSA би нашла најкраћи пут.)
+\end{minipage}
+\hfill
+\begin{minipage}{0.45\textwidth}
+	\includegraphics[width=\linewidth]{slika6_9.png}
+\end{minipage}
+
+\newpage
+\section{Апроксимација вредносне функције}
+
+У шаху постоји око $10^{45}$ стања. Ако управљaмо роботом, простор могућих очитавања сензора је континуалан. Већина реалних проблема имају својство да је скуп стања превише велики, па не можемо експлицитно памтити вредносне функције за свако стање. Очигледно морамо надоградити методе које смо до сада користили. Циљ наших алгоритама је да раде са произвољно великим простором стања.\\
+
+\subsection{Апроксиматори вредносне функције}
+
+\noindent Када човек научи да вози аутомобил, његово знање није ограниченo само на полигон на којем је учио. За људе, аутопут, градска улица, пут по којем пада киша, колона возила, пут у Новом Саду и пут у Београду нису потпуно различита стања. Ово је могуће зато што људи поседују способност генерализације. Ово постижемо коришћењем апроксиматора вредносне функције. \\
+
+\noindent До сада смо вредносне функције представљали ``таблицом'', у којој се налазило поље за сваки пар стање, акција. Чак и када би имали довољно меморије да чувамо сва стања, учење би једноставно било преспоро.
+
+\noindent Могућност генерализације смањује меморију и време извршавања, али смањује и прецизност.
+
+\noindent Арпоксиматоре означавамо на следећи начин:
+\begin{align}
+	\hat{v}(s,\boldsymbol{w}) &\approx v_\pi(s)\\
+    \hat{q}(s,a,\boldsymbol{w}) &\approx q_\pi(s,a)
+\end{align}
+$\boldsymbol{w}$ представља вектор параметара апроксиматора. Апроксиматор је функција стања (акције) и параметара, па и од њих зависи како ћемо процењивати стања. Учење вршимо мењањем параметара, што нам омогућава да мењамо процене вредносне функције.\\
+
+\begin{figure}[h]
+	\centering
+  	\includegraphics[width=0.8\linewidth]{slika7_0.png}
+    \caption{Различите врсте апроксиматора у учењу са појачавањем. Прва слика је апроксимација вредносне функције стања, друга апроксимира вредносну функцију акције, а трећа за неко стање даје вредносне функције свих могућих акција. У зависности од проблема, један од ових приступа ће бити најефикаснији.}
+\end{figure}
+
+\noindent Постоји велики број различитих апроксиматора функција. За учење са појачавањем потребно нам је да апроксиматор буде диференцијабилан, то јест да можемо наћи парцијални извод за сваки параметар. Када знамо градијент апроксиматора, знамо на који начин промена параметара утиче на излаз функције, па самим тим и можемо оцену вредности за неко стање померити у жељеном смеру.\\
+
+\noindent Градијент представља уопштење извода у случају функција више променљивих (функција над векторима). Градијент је вектор, садржи парцијалне изводе по свакој променљивој. Знак извода нам говори да ли функција расте или опада (што можемо схватити и као смер у ком функција расте), а апсолутна вредност колико се брзо функција мења. Слично, $k$-ти елемент градијента нам говори како ће се функција мењати ако улаз мењамо само у $k$-тој оси. Знак сваког елемента градијента нам говори у ком смеру да померамо тај елемент да би функција расла. Захваљујући томе, градијент даје смер најбржег раста функције, и то је својство које ћемо користити.\\
+
+\noindent Велики број апроксиматора најбоље раде када их тренирамо над подацима који су стационарни (што би значило да од почетка имамо исто искуство), и да су сви једнако расподељени, тј. да над сваким податком подједнако често вршимо учење. У нашем случају, подаци су транзиције агента. Очигледно, ниједно од ова два својства није задовољено. Агент свакако може открити потпуно нова стања, и нека може посетити само једном, док друга посећује врло често.
+
+\noindent У овом поглављу ћемо се фокусирати на линеарну комбинацију карактеристика, ради једноставности. У пракси се најчешће користе неуралне мреже \cite{PetarNm}.\\
+
+\subsection{Инкременталне методе}
+Инкрементални алгоритми ажурирања примењују на стања оним редом којим на њих наилазе и након тога одбацују виђено искуство. У наредном одељку видећемо како можемо ефикасније користи искуство, што ће бити изузетно битно у случају нелинеарних апроксиматора.
+\subsubsection{Градијентни спуст}
+Нека је $J(\boldsymbol{w})$ диференцијабилна функција вектора параметара $\boldsymbol{w}$.
+Градијент дефинишемо као:
+\begin{equation}
+	\nabla_{\boldsymbol{w}}J(\boldsymbol{w}) =
+    \begin{pmatrix}
+	\frac{\partial{J(\boldsymbol{w})}}{\partial\boldsymbol{w_1}}\\
+        \vdots\\
+        \frac{\partial{J(\boldsymbol{w})}}{\partial\boldsymbol{w}_n}
+	\end{pmatrix}
+\end{equation}
+Да би нашли локални минимум за $Ј(\boldsymbol{w})$ довољно је да вектор параметара $\boldsymbol{w}$ итеративно малим корацима померимо у смеру негативног градијента:
+\begin{equation}
+	\triangle\boldsymbol{w}=-\frac{1}{2}\alpha\nabla_{\boldsymbol{w}}J(\boldsymbol{w})
+\end{equation}
+$\alpha$ је величина корака, $\frac{1}{2}$ није битна, служи да би се формула коју ћемо касније видети лепше средила. Ово је основна идеја градијентног спуста.\\
+
+\noindent У случају оцене вредносне функције циљ је наћи вектор параметара $\boldsymbol{w}$ који минимизује очекивано средње квадратно одступање апроксимације $\hat{v}_\pi(s,\boldsymbol{w})$ и праве вредносне функције $v_\pi(s)$:
+\begin{equation}
+	J(\boldsymbol{w})= \mathbb{E}_\pi\left[(v_\pi(S)-\hat{v}(S,\boldsymbol{w}))^2\right]
+\end{equation}
+
+\noindent Градијентни спуст налази локални минимум итеративним ажурирањем вектора параметара:
+\begin{align}
+	\triangle \boldsymbol{w} &= -\frac{1}{2}\alpha\nabla_{\boldsymbol{w}}J(\boldsymbol{w})\\
+    	&=\alpha\mathbb{E}_\pi\left[(v_\pi(S) - \hat{v}(S,\boldsymbol{w}))\nabla_{\boldsymbol{w}} \hat{v}(S,\boldsymbol{w})\right]
+\end{align}
+
+\noindent Да би израчунали очекивану вредност неопходно је да знамо динамику окружења, па је чист градијентни спуст за нас неупотребљив. Уместо тога користимо стохастични градiјентни спуст, који ажурирања врши у правцу појединачних градијената:
+\begin{equation}
+	\triangle \boldsymbol{w} = \alpha(v_\pi(S) - \hat{v}(S,\boldsymbol{w}))\nabla_{\boldsymbol{w}} \hat{v}(S,\boldsymbol{w})
+\end{equation}
+После довољно итерација, стохастични градијентни спуст тежи обичном.\\
+
+\noindent $v_\pi$ које смо у претходним формулама користили нам није познато, њега ћемо заменти MC и TD метама које смо обрадили.
+
+\begin{figure}[h]
+	\centering
+    \begin{subfigure}{0.45\linewidth}
+    	\includegraphics[width=\linewidth]{slika7_1.png}
+    \end{subfigure}
+  	\begin{subfigure}{0.40\linewidth}
+    	\includegraphics[width=\linewidth]{slika7_2.png}
+    \end{subfigure}
+    \caption{Визуелизација градијентног спуста.}
+\end{figure}
+
+\subsubsection{Вектор карактеристика}
+	Циљ вектора карактеристика је да стање представи преко низа вредости које га карактеришу. Те карактеристичне вредности треба што боље да описују стање у којем се агент налази. Када користимо линеарни апроксиматор, на улазу му дајемо овај вектор. Уколико је избор карактеристика добар, тј. ако у себи садржи све битне информације проблема који решавамо, може довести до значајно бржег учења.
+    \begin{equation}
+    x(S)=\begin{pmatrix}
+    x_1(S)\\
+    \vdots\\
+    x_n(S)
+    \end{pmatrix}
+    \end{equation}
+
+\noindent На пример, робот који жели да дође до неке значајне тачке, може уместо своје апсолутне локације у универзуму користити удаљеност од те тачке.
+
+\subsubsection{Апроксимација линеарном комбинацијом карактеристика}
+Вредносну функцију представљамо линеарнoм комбинацијoм карактеристика:
+\begin{equation}
+	\hat{v}(S,\boldsymbol{w})= x(S)^T\boldsymbol{w}=\sum_{j=1}^nx_j(S)\boldsymbol{w}_j
+\end{equation}
+$x(S)^T$ је транспонована матрица $x(S)$.\\
+
+\noindent Тежине одређују колико је битна свака од карактеристика. Линеарном комбинацијом у већини случајева не добијамо савршену апроксимацију, али имамо једноставну репрезентацију стања са којом је лако радити.\\
+
+\noindent Такође битно својство је то што је циљна функција сада квадратна:
+\begin{equation}
+	J(\boldsymbol{w})= \mathbb{E}_\pi\left[(v_\pi(S)-x(S)^T\boldsymbol{w}))^2\right]
+\end{equation}
+Ово значи да нема локалних минимума, па стохастични градијентни спуст увек проналази глобални минимум. Ажурирања добијају следећи облик:
+\begin{align}
+	\nabla_{\boldsymbol{w}}\hat{v}(S,\boldsymbol{w})&=x(S)\\
+    \triangle\boldsymbol{w} &= \alpha(v_\pi(S)-\hat{v}(S,\boldsymbol{w}))x(S)
+\end{align}
+Дакле, $k$-ту тежину ажурирамо производом величине корака, грешке процене и вредности $k$-те карактеристике. Што је већа активираност неке карактеристике, она више утиче на тренутно стање, па ће и њена промена бити већа. Ово и интуитивно има смисла, нпр. FALI PRIMER\\
+
+\noindent Табеларни приступ (чување свих стања) који смо до сада користили је само специјални случај линеарне апроксимације. Да би се у ово уверили, довољно је да вектор карактеристика има низ индикатора за свако од могућих стања.
+\begin{equation}
+	x^{table}(S)=\begin{pmatrix}
+	I(S=s_1)\\
+    \vdots\\
+    I(S=s_n)
+	\end{pmatrix}
+\end{equation}
+Сада сваки параметар $w_k$ даје вредност $k$-тог стања:
+\begin{equation}
+	\hat{v}(S,\boldsymbol{w})=\begin{pmatrix}
+	I(S=s_1)\\
+    \vdots\\
+    I(S=s_n)
+    \end{pmatrix}
+    .
+    \begin{pmatrix}
+    \boldsymbol{w}_1\\
+    \vdots\\
+    \boldsymbol{w}_n
+    \end{pmatrix}
+\end{equation}
+
+\subsubsection{Алгоритми предвиђања}
+У досадашњем делу поглавља претпоставили смо да знамо праву вредносну функцију $v_\pi$. Ово у учењу са појачавањем наравно није случај. Потребно је да $v_\pi$ заменимо метом. Ово постижемо једним од алгоритама које смо већ видели:
+
+\paragraph{Монте Карло оцена}
+У случају Монте Карло оцене, мета је поврат $G_t$:
+    \begin{equation}
+    	\triangle\boldsymbol{w}=\alpha(G_t-\hat{v}(S_t,\boldsymbol{w}))\nabla_{\boldsymbol{w}}\hat{v}(S_t,\boldsymbol{w})
+    \end{equation}
+Подсетимо се да је поврат непристрасна оцена вредносне функције, високе дисперзије. Овај алгоритам можемо схватити и као супервизирано учење над ``тренинг подацима:''
+\begin{equation}
+	\left<S_1,G_1\right>, \left<S_2,G_2\right>,\dots,\left<S_T,G_T\right>
+\end{equation}
+
+\noindentНа пример, ако користимо линеарну Монте Карло оцену добијамо:
+\begin{equation}
+    	\triangle\boldsymbol{w}=\alpha(G_t-\hat{v}(S_t,\boldsymbol{w}))x(S_t)
+\end{equation}
+
+\noindent Монте Карло оцена конвергира локалном оптимуму чак и када користимо нелинеарне апроксиматоре, што је последица непристрасности поврата. Ово својство нећемо доказивати.
+
+\paragraph{TD оцена}
+За TD(0) oцену, користимо TD мету $R_{t+1}+\gamma\hat{v}(S_{t+1},\boldsymbol{w})$:
+    \begin{equation}
+    	\triangle\boldsymbol{w}=\alpha(R_{t+1}+\gamma\hat{v}(S_{t+1},\boldsymbol{w})-\hat{v}(S_t,\boldsymbol{w}))\nabla_{\boldsymbol{w}}\hat{v}(S_t,\boldsymbol{w})
+    \end{equation}
+\noindent TD мета је пристрасна оцена вредносне функције. Као и за MC, овај алгоритам можемо схватити као супервизирано учење над виђеним искуством:
+\begin{equation}
+	\left<S_1,R_2+\gamma\hat{v}(S_2,\boldsymbol{w})\right>, \left<S_2,R_3+\gamma\hat{v}(S_3,\boldsymbol{w})\right>,\dots,\left<S_{T-1},R_T\right>,
+\end{equation}
+
+\noindent У случају линеарне TD(0) оцене, промене тежина добијају следећи облик:
+\begin{equation}
+    	\triangle\boldsymbol{w}=\alpha(R_{t+1}+\gamma\hat{v}(S',\boldsymbol{w})-\hat{v}(S_t,\boldsymbol{w}))x(S_t)
+\end{equation}
+
+\noindent Може се доказати да линеарна TD(0) оцена конвергира глобалном оптимуму. Ово није гарантовано ако користимо нелинеарне апроксиматоре. Ипак, у пракси се показује да TD методе на већини проблема раде и боље него MC, у смислу брже конвергенције и мање крајње грешке коју достижу.
+
+\paragraph{TD($\lambda$) оцена}
+За TD($\lambda$), мета је $\lambda$-поврат $G_t^\lambda$:
+    \begin{equation}
+    	\triangle\boldsymbol{w}=\alpha(G_t^\lambda-\hat{v}(S_t,\boldsymbol{w}))\nabla_{\boldsymbol{w}}\hat{v}(S_t,\boldsymbol{w})\\
+    \end{equation}
+$\lambda$-поврат је оцена мање пристрасности од TD мете и мање дисперзије од поврата. Поново алгоритам можемо схватити као супервизирано учење над виђеним искуством:
+\begin{equation}
+	\left<S_1,G_1^\lambda\right>, \left<S_2,G_2^\lambda\right>,\dots,\left<S_T,G_T^\lambda\right>
+\end{equation}
+
+\noindent Ажурирања параметара на примеру линеарне TD($\lambda$) са погледом унапред имају следећи облик:
+\begin{equation}
+    	\triangle\boldsymbol{w}=\alpha(G_t^\lambda-\hat{v}(S_t,\boldsymbol{w}))x(S_t)
+\end{equation}
+Ако користимо поглед уназад, потребни су нам трагови одговорности. Овог пута, траг не чувамо за свако стање, већ за сваку карактеристику. Када наиђемо на неко стање, сваки траг одговорности увећавамо за вредност одговарајуће карактеристике:
+\begin{align}
+	\delta_t&=R_{t+1}+\gamma\hat{v}(S_{t+1},\boldsymbol{w})-\hat{v}(S_t,\boldsymbol{w})\\
+    E_t&=\gamma\lambda E_{t-1}+x(S_t)\\
+    \triangle\boldsymbol{w}&=\alpha\delta_tE_t
+\end{align}
+Погледи унапред и уназад су еквивалентни.\\
+
+\begin{figure}[h!]
+	\centering
+  	\includegraphics[width=0.7\linewidth]{slika7_3.png}
+    \caption{Конвергенције различитих алгоритама предвиђања.}
+\end{figure}
+\subsubsection{Алгоритми контроле}
+
+Већ смо видели два битна додатка која контрола захтева у односу на предвиђање: коришћење вредносне функције акција $q(s,a)$ (сада користимо апроксиматор ове функције $\hat{q}(S,A,\boldsymbol{w})$) и $\epsilon$-похлепно истраживање.\\
+
+\noindent Као и до сада, алгоритми контроле са апроксиматором се састоје из два дела:
+\begin{itemize}
+	\item Оцена полисе. Као и у случају без апроксиматора, није неопходно да оцена дође до праве вредносне функције. Уместо тога радимо пар корака оцене (често 1) и одмах побољшавамо полису. Када користимо апроксиматор, чак је и бесмислено чекати праву вредносну функцију, јер самим коришћењем апроксиматора углавном губимо могућност да је потпуно прецизно одредимо.
+    \item $\epsilon$-похлепно побољшање полисе.
+\end{itemize}
+
+\begin{figure}[h!]
+	\centering
+  	\includegraphics[width=0.5\linewidth]{slika7_4.png}
+\end{figure}
+
+\noindent Како користимо апроксиматор, немамо гаранцију да ће алгоритам контроле конвергирати оптималној вредносној функцији. Најбоље чему можемо да се надамо је да наша оцена постаје ближа и ближа $q_*$. Испоставља се да ни ово није случај. У пракси ови алгоритми осцилују око решења као у некој посуди, и некада изађу из посуде па се поново врате. Иако теријски немају никакве гаранције конвергенције, алгоритми углавном после довољно великог броја корака долазе прилично близу оптималне вредносне функције.\\
+
+\noindent Погледајмо сада како изгледају коришћени појмови у случају вредносне функције акција. Желимо да минимизујемо средње квадратно одступање:
+\begin{equation}
+	J(\boldsymbol{w})=\mathbb{E}_\pi\left[(q_\pi(S,A)-\hat{q}(S,A,\boldsymbol{w}))^2\right]
+\end{equation}
+Формула за ажурирања вектора параметара стохастичним градијентним спустом:
+\begin{equation}
+	\triangle \boldsymbol{w} = \alpha(q_\pi(S,A)-\hat{q}(S,A,\boldsymbol{w}))\nabla_{\boldsymbol{w}}\hat{q}(S,A,\boldsymbol{w})
+\end{equation}
+Сада у случају линеарног апроксиматора, пар (стање, акција) представљамо вектором карактеристика:
+\begin{equation}
+	x(S,A)=\begin{pmatrix}
+	x_1(S,A)\\
+    \vdots\\
+    x_n(S,A)
+	\end{pmatrix}
+\end{equation}
+Ажурирања параметара у случају линеарног апроксиматора:
+\begin{equation}
+	\triangle \boldsymbol{w} = \alpha(q_\pi(S,A)-\hat{q}(S,A,\boldsymbol{w}))x(S,A)
+\end{equation}
+Ажурирања са убаченом метом за редом MC, TD (SARSA) и TD($\lambda$) са погледом унапред:
+\begin{align}
+\triangle \boldsymbol{w} &= \alpha(G_t-\hat{q}(S,A,\boldsymbol{w}))\nabla_{\boldsymbol{w}}\hat{q}(S,A,\boldsymbol{w})\\
+\triangle \boldsymbol{w} &= \alpha(R_{t+1}+\gamma\hat{q}(S_{t+1},A_{t+1},\boldsymbol{w})-\hat{q}(S,A,\boldsymbol{w}))\nabla_{\boldsymbol{w}}\hat{q}(S,A,\boldsymbol{w})\\
+\triangle \boldsymbol{w} &= \alpha(q_t^\lambda(S,A)-\hat{q}(S,A,\boldsymbol{w}))\nabla_{\boldsymbol{w}}\hat{q}(S,A,\boldsymbol{w})\\
+\end{align}
+
+\begin{figure}[h!]
+	\centering
+  	\includegraphics[width=0.9\linewidth]{slika7_5.png}
+    \caption{SARSA алгоритам са апроксиматором функције на примеру аутомобила на планини. Циљ је попети се на десни врх планине. Стање нам је дато са два броја: $x$ координатом аутомобила и његовом брзином, који су континуални. У сваком кораку аутомобил може да убрза на десно или лево. Нема довољно снаге да се одједном попне до циља, већ мора да се ``заљуља'', тј. да оде на једну страну, потом се пусти и оде што више на другу, и тако више пута док не стекне довољну брзину. На сликама је приказан апроксиматор вредносне функције. Нећемо улазити у његове детаље. Битно је знати да је састављен од великог броја плочица које се преклапају, тако да ажурирања вредносне функције у једној тачки повлаче у истом смеру и њој суседне тачке.}
+\end{figure}
+
+\begin{figure}[h!]
+	\centering
+  	\includegraphics[width=0.6\linewidth]{slika7_7.png}
+    \caption{Конвергенција различитих алгоритама контроле. \checkmark значи да алгоритам равномерно конвергира, тј. сваким кораком је све ближи решењу. (\checkmark) представља ``цвокотаву'' конвергенцију, што значи да се алгоритам једно време приближава па потом одаљава од решења, али у целини конвергира релативно близу оптималне вредносне функције.\\}
+\end{figure}
+
+\begin{figure}[h]
+	\centering
+  	\includegraphics[width=0.55\linewidth]{slika7_6.png}
+    \caption{На графицима су приказане просечне грешке апроксимације за различите изборе $\lambda$ у случају 4 позната проблема. Као и без апроксиматора, MC методе поново дају најгоре резулате, иако нам гарантују конвергенцију локалном минимуму. Бутстрепинг повећава ефикасност. Али морамо бити опрезни јер постоје примери у којима ова метода дивергира. Градијентно Q-учење }
+\end{figure}
+
+\newpage
+
+\subsection{Скуповне методе}
+Инкременталне методе одбацују виђене транзиције после једног ажурирања. Ово није ефикасно јер једном искоришћено искуство и даље има сазнајну вредност. Поновно коришћење искуства памтимо у меморији искуства. Ове методе су скуповне, јер сада при сваком кораку нећемо ажурирати вектор параметара само једном транзицијом, већ скупом транзиција (величине скупова у пракси су углавном 16, 32 или 64).\\
+
+\noindent Најчешће коришћени апроксиматор функција у пракси су неуралне мреже. Да би оне научиле добру апроксимацију функције, потребно је да подаци којима је тренирамо буду што више једнако расподељени. У нашем контексту, ово би значило да је при сваком кораку једнако вероватно да било коју могућу транзицију користимо за ажурирање. Како немамо увид у све могуће трaнзиције, најбоље што можемо је да памтимо и искористимо виђено искуство. Инкременталне методе очигледно немају ово својство. Стања на трајекторијама које агент пролази су суседна, па самим тим и јако корелисана. Неурална мрежа ће се превише фокусирати на уску групу стања, за њих ће научити добру апроксимацију, али ће за остала катастрофално дивергирати.
+
+
+
+
+\subsubsection{Минимално квадратно предвиђање}
+Сада, уз апроксиматор вредносне функције $\hat{v}(s,\boldsymbol{w})\approx v_\pi(s)$, чувамо и читаво виђено искуство $\mathcal{D}$ сачињено од парова (стање, акција):
+\begin{equation}
+	\mathcal{D}={\left<s_1,v_1^\pi\right>, \left<s_2,v_2^\pi\right>, \dots, \left<s_T,v_T^\pi\right>}
+\end{equation}
+Потребан нам је начин да одредимо колико добро апроксиматор процењује вредности из искуства.\\
+
+\noindent Алгоритми минималног квадратног предвиђања налазе вектор параметара $\boldsymbol{w}$ који минимизује укупно квадратно одступање између апроксимације $\hat{v}(s_t,\boldsymbol{w})$  и праве вредности $v_t^\pi$:
+\begin{align}
+	LS(\boldsymbol{w})&=\sum_{t=1}^T\left(v_t^\pi-\hat{v}(s_t,\boldsymbol{w}) \right)^2\\
+    &=\mathbb{E}_{\mathcal{D}}\left[v^\pi-\hat{v}(s,\boldsymbol{w}) \right]
+\end{align}
+
+\subsubsection{Стохастични градијентни спуст са меморијом искуства}
+Ово су алгоритми минималног квадратног предвиђања који итеративно примењује два коракa:
+\begin{itemize}
+	\item Узимамо узорак  (стање, акција) из искуства:
+    	\begin{equation}
+    	\left<s,v^\pi\right> \sim \mathcal{D}
+    	\end{equation}
+    \item Вршимо ажурирање стохастичним градијентним спустом:
+    	\begin{equation}
+    	\triangle \boldsymbol{w} = \alpha(v^\pi - \hat{v}(s,\boldsymbol{w}))\nabla_{\boldsymbol{w}}\hat{v}(s,\boldsymbol{w})
+    	\end{equation}
+\end{itemize}
+Овим поступком вектор параметара конвергира минималном квадратном решењу:
+\begin{equation}
+	\boldsymbol{w} ^\pi = \underset{\boldsymbol{w}}{\mathrm{argmin}}\ LS(\boldsymbol{w})
+\end{equation}
+
+\noindent Наравно, нама права вредносна функција $v_\pi$ није позната. Уместо ње морамо убацити неку мету. Како користимо стара искуства, учење мора бити ван полисе, па се алгоритам Q-учења намеће као логичан избор.
+
+\subsubsection{Дубокe Q-мреже (DQN) са меморијом искуства}
+Ово је алгоритам Q-учења који као апроксиматор користи дубоку неуралну мрежу \cite{PetarNm}, и уз то имплементира две битне идеје: \textbf{меморију искуства} и \textbf{фиксне Q-мете}. \\
+
+\noindent Шта подразумевају фиксне Q мете? Када користимо апроксиматор вредносне функције, $i$-то Q-ажурирање узимаја следећи облик:
+\begin{equation}
+	\triangle w_i = \alpha(r+ \gamma\max_{a'}\ \hat{q}(s',a',w_i)-\hat{q}(s,a,w_i)) \nabla_{w_i}\hat{q}(S,A,w_i)
+\end{equation}
+Подсетимо се да из стања $s$ акцију $a$ бирамо на основу $\epsilon$-похлепне полисе.\\
+Идеја је да замрзнемо параметре који се користе за процену мете, тј. да $r+\gamma \underset{a'}{\max}\ \hat{q}(s',a',w_i)$ заменимо са $r+\gamma \underset{a'}{\max}\ \hat{q}(s',a',w_i^-)$, при чему вектор $w_i^-$ на почетку постављамо да буде баш $w_i$, а потом га неки број корака не мењамо (у пракси углавном пар хиљада корака), након чега га поново изједначавамо са $w_i$.\\
+
+\noindent Зашто уводимо фиксне Q-мете? Оне значајно стабилизују учење. Дубоке неуралне мреже су врло нестабилне, и ако им дамо низ корелисаних стања лако дивергирају. Иако коришћењем меморије искуства омогућавамо насумично бирање транзиција, насумично можемо више пута извући мање-више корелисана стања и потпуно упропастити до тада изграђену апроксимацију. Иако на први поглед овај ефекат не делује значајно, у пракси се испоставља да јесте. Тек када фиксирамо параметре мете на пар хиљада корака, вероватноћа да нам се ово деси постаје занемарљиво мала.\\
+
+\noindent DQN је од великог значаја. У време када је изашао (2013) био је први агент који је успешно играо игрице из Атари \cite{Atari} домена и покренуо је низ других истраживања у овој области. Изузетно је импресивно то што су агенту дате само слике екрана. Он нема никакву информацију о томе шта ствари на екрану значе. Ово значајно отежава учење, јер агент сам мора да научи да тумачи слике. Тип апроксиматора који се користи за рад над сликама је конволуциона неурална мрежа \cite{PetarNm}, у чије детаље нећемо улазити.\\
+
+\noindent Псеудокод алгоритма, при сваком кораку ажурирања вршимо помоћу мини-скупова:
+\begin{codebox}
+	\Procname{$\proc{DQN with experience replay}$}
+    \li $\proc{initialize replay memory } D$
+ 	\li $\proc{initialize parameter vectors } w \proc{ and } w^- \proc{ with random numbers}$
+    \li $\proc{for all episodes}$
+    \li \Do 
+    	$\proc{observe initial state } s$
+    \li $\proc{repeat}$
+    \li \Do 
+    	$\proc{with probability } \epsilon \proc{ select a random action}$
+    \li $\proc{otherwise select } a= \underset{a'}{\mathrm{argmax}}\ Q(s,a')$
+    \li $\proc{execute action } a \proc{ and observe reward } r \proc{ and new state } s'$
+    \li $\proc{store experience } \left(s,a,r,s'\right) \proc{ in replay memory } D$ 
+    \li $\proc{sample random minibatch of transitions } (s_j,a_j,r_j,s'_j) \proc{ from } D$
+    \li $\proc{set } y_j= \begin{cases}
+    	r_j\ \text{for terminal } s_j'\\
+        r_j + \gamma\max_{a'}\ Q(s_j',a',w^-) \ \text{otherwise}
+    \end{cases}$
+    \li $\proc{perform gradient descent step on } (y_j-Q(s_j,a_j,w))^2$
+    \li $\proc{if needed set } w^-=w$
+    	\End 
+    \li $\proc{until end of episode}$
+    	\End 
+    \li $\proc{end for}$
+        
+\end{codebox}
+
+
+
+\begin{figure}[h!]
+	\centering
+  	\includegraphics[width=0.9\linewidth]{slika7_8.png}
+    \caption{Резултати на Атари игрицама \cite{DS6}. DQN постиже боље резултате од стручног људског играча на свим игрицама лево од вертикалне линије.}
+\end{figure}
+
+\newpage
+
+\begin{figure}[h!]
+	\centering
+  	\includegraphics[width=0.75\linewidth]{slika7_9.png}
+    \caption{Просечна укупна награда по епизоди на више игрица \cite{DS6}, у зависности од тога да ли користимо меморију искуства и фиксне Q-мете.}
+\end{figure}
+
+\newpage 
+
+\section{Закључак}
+
+\noindent Циљ овог матурског рада био је да теоријски обради учење са појачавањем. Фокус није био толико на конкретним применама, колико на схватању генералних идеја и алгоритама. Почели смо од решавања потпуно познатих окружења и редом смо усложњавали проблем. На крају смо видели како можемо скалирати научене методе на реалне примере и упознали се са једним скорашњим успешним моделом.\\
+
+\noindent Последњих пар година настао је велики број надоградњи на DQN модел. Могућност за евентуални даљи рад су њихова обрада и поређење. Такође, изостављена је имплементација обрађених алгоритама.\\
+
+\noindent Током израде овог матурског рада, нисам успео да нађем било какву литературу на српском језику. Идеје у овом матурском раду су уведене од нуле и уз мноштво примера, па сматрам да он може да послужи као квалитетна почетна тачка сваком ентузијасти. Такође сматрам да је обрађено знање довољно за даљи самосталан рад и разумевање најсавременијих алгоритама.\\
+
+\noindent На самом крају желео бих да изразим захвалност:
+\begin{itemize}
+	\item \textbf{Петру Величковићу} -- мом ментору, који ми је и поред великог броја обавеза значајно помогао при изради овог рада низом сугестија, предлогом теме и упућивањем на одговарајућу литаратуру. Такође, као једном од оснивача Недеље информатике, која ме је упозанала са великим бројем до тада невиђених области рачунарских наука и заинтересовала за машинско учење. 
+    \item  \textbf{Јелени Хаџи-Пурић} -- мом ментору, чија ме безгранична енергија увек мотивише.
+\item \textbf{Филипу Марићу} -- мом професору информатике из средње школе, који увек предаје на забаван начин, уз мноштво инспиративних примера.
+	\item \textbf{Момчилу Топаловићу и Алекси Милисављевићу} -- другарима из школе, захваљујући којима сам значајно напредовао на пољу такмичарског програмирања.
+\end{itemize}
+
+\newpage 
+
+
+\renewcommand\refname{Литература}
+	\begin{thebibliography}{9}
+     	\bibitem{DS1}
+        David Silver,
+        \textit{Introduction to Reinforcement Learning}.
+        Доступно на: \url{http://www0.cs.ucl.ac.uk/staff/d.silver/web/Teaching_files/intro_RL.pdf}. [Прегледано 28.5.2017].
+        
+        \bibitem{DS2}
+        David Silver,
+        \textit{Markov Decision Processes}.
+        Доступно на: \url{http://www0.cs.ucl.ac.uk/staff/d.silver/web/Teaching_files/MDP.pdf}{link}. [Прегледано 28.5.2017].
+        
+        \bibitem{DS3}
+        David Silver,
+        \textit{Planning by Dynamic Programming}
+        Доступно на: \url{http://www0.cs.ucl.ac.uk/staff/d.silver/web/Teaching_files/DP.pdf}. [Прегледано 28.5.2017].
+        
+        \bibitem{DS4}
+        David Silver,
+        \textit{Model-Free Prediction}
+        Доступно на: \url{http://www0.cs.ucl.ac.uk/staff/d.silver/web/Teaching_files/MC-TD.pdf}. [Прегледано 28.5.2017].
+        
+        \bibitem{DS5}
+        David Silver,
+        \textit{Model-Free Control}
+        Доступно на: \url{http://www0.cs.ucl.ac.uk/staff/d.silver/web/Teaching_files/control.pdf}. [Прегледано 28.5.2017].
+        
+        \bibitem{DS6}
+        David Silver,
+        \textit{Value Function Approximation}
+        Доступно на: \url{http://www0.cs.ucl.ac.uk/staff/d.silver/web/Teaching_files/FA.pdf}. [Прегледано 28.5.2017].
+        
+        \bibitem{SBook}
+        Richard S. Sutton, Andrew G. Barto, 
+        \textit{Reinforcement Learning: An Introduction},
+        MIT Press, 1998
+        
+        \bibitem{PetarRl}
+        Петар Величковић,
+        \textit{Учење са појачавањем},
+        2018. Доступно на: \url{http://www.csnedelja.mg.edu.rs/static/resources/v4.0/sre1_ucenje_pv.pdf}. [Прегледано 28.5.2017.]
+        
+        \bibitem{PetarEng}
+        Петар Величковић,
+        \textit{Reinforcement learning fundamentals},
+        2018. Доступно на: \url{http://www.cl.cam.ac.uk/~pv273/slides/RLBasics.pdf}. [Прегледано 28.5.2017.]
+        
+        \bibitem{PetarNm}
+        Петар Величковић,
+        \textit{Неуралне мреже},
+        2016. Доступно на: \url{http://www.csnedelja.mg.edu.rs/static/resources/v3.0/sre1_neuralne_pv.pdf}. [Прегледано 28.5.2017.]
+        
+        \bibitem{Atari}
+        Volodymyr Mnih, Koray Kavukcuoglu, David Silver, Alex Graves, Ioannis Antonoglou,
+Daan Wierstra, Martin Riedmill,
+		\textit{Playing Atari with Deep Reinforcement Learning}
+	\end{thebibliography}
+
+
+
+
+
+
+
+\end{document}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
